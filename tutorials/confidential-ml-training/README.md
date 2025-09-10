@@ -427,7 +427,7 @@ For production deployments, consider these additional security measures:
 
 At this point, we have a Key Vault and a key ready for Secure Key Release. With this setup, your key has a comprehensive release policy that will only allow it to be released to a Confidential VM that can provide valid attestation evidence meeting all security requirements.
 
-#### 3.8 (Optional). Set up OS Disk Encryption with Customer-Managed Keys (CMK)
+#### 3.8. (Optional) Set up OS Disk Encryption with Customer-Managed Keys (CMK)
 
 > [!TIP]
 > Need OS-disk encryption with your own keys (CMK)? 
