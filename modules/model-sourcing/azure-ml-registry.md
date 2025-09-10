@@ -59,4 +59,4 @@ $MODEL_DIR = $OUTPUT_DIR  # e.g., ./Phi-4-mini-reasoning
 
 | Tutorial                                                 | Continue at                                                                                                  |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [Step 6: Model Preparation](../../tutorials/confidential-llm-inferencing/README.md#step-6-model-preparation) |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [6. Model Preparation](../../tutorials/confidential-llm-inferencing/README.md#6-model-preparation) |

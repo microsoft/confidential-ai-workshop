@@ -136,7 +136,7 @@ The command will return a JSON object confirming that the resource group was cre
 For this tutorial, we will use the **Premium SKU of Azure Key Vault**. It provides the necessary Secure Key Release (SKR) functionality backed by FIPS 140-2 Level 2 validated HSMs and is significantly more cost-effective for learning and demonstration purposes.
 
 > [!TIP]
-> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](./Azure-Managed-HSM.md) *(coming soon)*.
+> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](../../modules/key-management/Managed-HSM.md) *(coming soon)*.
 
 Azure offers two approaches for configuring release policies:
 
