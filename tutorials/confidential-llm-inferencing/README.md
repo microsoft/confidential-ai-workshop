@@ -292,7 +292,7 @@ The Secure Key Release (SKR) policy is a JSON document that defines the conditio
 
 > [!TIP]
 > Need a **dedicated attestation provider** instead of the shared endpoint?
-> Follow: [Provision a Dedicated Microsoft Azure Attestation Provider](../../Modules/attestation/custom-attestation-provider.md),
+> Follow: [Provision a Dedicated Microsoft Azure Attestation Provider](../../modules/attestation/custom-attestation-provider.md),
 > then set the `authority` in `release-policy.json` to your attestation URL and store it in `$ATTEST_URL`.
 
 
@@ -402,8 +402,8 @@ To securely store the model, we will first need to have the model files locally,
 >
 > | Source | When to use | Module |
 > |---|---|---|
-> | **Azure ML Registry** | Models curated in Azure ML Registries | [Download from Azure ML Registry](../../Modules/model-sourcing/azure-ml-registry.md) |
-> | **Hugging Face Hub** | Public/open models via HF CLI | [Download from Hugging Face Hub](../../Modules/model-sourcing/hugging-face-hub.md) |
+> | **Azure ML Registry** | Models curated in Azure ML Registries | [Download from Azure ML Registry](../../modules/model-sourcing/azure-ml-registry.md) |
+> | **Hugging Face Hub** | Public/open models via HF CLI | [Download from Hugging Face Hub](../../modules/model-sourcing/hugging-face-hub.md) |
 >
 > Each module leaves your local model path in `$MODEL_DIR`. Then continue below to generate a local key, encrypt model files, and **wrap** the key with SKR.
 
