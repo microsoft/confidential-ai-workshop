@@ -1,4 +1,3 @@
-# streamlit_client.py
 import json
 import requests
 import streamlit as st
@@ -71,7 +70,7 @@ if "turns" not in st.session_state:
     st.session_state.turns = []
 
 # =========================
-# 🧩 Utilities
+# Utilities
 # =========================
 def build_headers(api_key: str, header_mode: str):
     """
@@ -290,7 +289,7 @@ def stream_chat_completions(
 
 
 # =========================
-# 🧭 Sidebar (Configuration)
+# Sidebar (Configuration)
 # =========================
 with st.sidebar:
     st.subheader("⚙️ Server Configuration")
@@ -318,13 +317,13 @@ with st.sidebar:
 
 
 # =========================
-# 🖼️ Header
+# Header
 # =========================
 st.title("🤖 Client for Confidential GPU Inference")
 st.caption("Multi‑turn chat • Streaming • Clear reasoning via expander • Configurable server & API Key")
 
 # =========================
-# 🗂️ History Display
+# History Display
 # =========================
 # Display past turns (without re-streaming).
 for msg in st.session_state.turns:
@@ -335,7 +334,7 @@ for msg in st.session_state.turns:
                 st.markdown(f"<div class='thinking'>{escape(msg['think'])}</div>", unsafe_allow_html=True)
 
 # =========================
-# 💬 User Input & Streaming
+# User Input & Streaming
 # =========================
 if user_prompt := st.chat_input("Ask your question…"):
     # 1) Display and store on UI side
