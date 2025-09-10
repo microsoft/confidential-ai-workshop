@@ -32,9 +32,6 @@ We will achieve this by leveraging the following concepts:
 <details>
 <summary>Click here to expand if you want to deep dive even more in those concepts</summary>
 
-- Confidential AI:
-  - [Confidential AI Overview](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-ai)
-
 - DEK, KEK and Master Key Management:
   - [Azure Data Encryption at Rest](https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-atrest)
   - [Unbderstanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
