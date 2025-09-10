@@ -27,5 +27,5 @@ After completing a key management module, return to the step in your tutorial th
 
 | Tutorial                               | Suggested return point                                                                                                 |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**     | [3.8 OS Disk Encryption (Optional)](../../tutorials/confidential-ml-training/README.md#38-optional-os-disk-encryption-optional) |
+| **Confidential ML Training (CPU)**     | [3.8. (Optional) Set up OS Disk Encryption with Customer-Managed Keys (CMK)](../../tutorials/confidential-ml-training/README.md#38-optional-set-up-os-disk-encryption-with-customer-managed-keys-cmk)  |
 | **Confidential LLM Inferencing (GPU)** | [4.6. (Optional) Configure OS Disk Encryption with Customer‑Managed Keys](../../tutorials/confidential-llm-inferencing/README.md#46-optional-configure-os-disk-encryption-with-customer-managed-keys)    |
