@@ -393,7 +393,7 @@ At this point, we have a Key Vault and a key ready for Secure Key Release. With 
 
 > [!TIP]
 > Need OS-disk encryption with your own keys (CMK)? 
-> Use the module: [OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/customer-managed-key.md), then return here to continue deployment.
+> Use the module: [OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/os-disk-encryption-cmk.md), then return here to continue deployment.
 
 
 ### 4. Deploy the Confidential VM
