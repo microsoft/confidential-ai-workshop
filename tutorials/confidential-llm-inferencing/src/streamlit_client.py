@@ -4,12 +4,12 @@ import streamlit as st
 from html import escape
 
 # =========================
-# ⚙️ Page Configuration
+# Page Configuration
 # =========================
 st.set_page_config(page_title="LLM Client (Confidential GPU)", layout="wide")
 
 # =========================
-# 🎨 Styles
+# Styles
 # =========================
 CUSTOM_CSS = """
 <style>
@@ -58,7 +58,7 @@ CUSTOM_CSS = """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # =========================
-# 🧠 Session state
+# Session state
 # =========================
 if "messages" not in st.session_state:
     # Message history sent to model (without <think>)

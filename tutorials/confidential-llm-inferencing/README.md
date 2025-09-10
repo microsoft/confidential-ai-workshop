@@ -1,6 +1,5 @@
 # Tutorial : Confidential GPU VMs – Secure LLM Inference on NVIDIA H100
-> **Focus**
-> In this tutorial, we demonstrate Azure's new capability: Confidential GPU VMs using NVIDIA's H100 Tensor Core GPU. This part is particularly exciting for AI use-cases because it allows running large ML models (like deep neural networks, large language models) with the same confidentiality guarantees we saw on CPU but now extends to GPU workloads. We will deploy a Confidential VM with an attached H100 GPU ([Azure's NCc series](https://azure.microsoft.com/en-us/blog/how-azure-is-ensuring-the-future-of-gpus-is-confidential/?msockid=2a5e7f6d63ca67d3000a697162ed6667), e.g., [Standard_NCC40ads_H100_v5](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nccadsh100v5-series?tabs=sizebasic)) and run an AI inference service on it. We'll show how the model's weights and the user's inputs (prompts) are protected.
+> **Focus**: In this tutorial, we demonstrate Azure's new capability: Confidential GPU VMs using NVIDIA's H100 Tensor Core GPU. This part is particularly exciting for AI use-cases because it allows running large ML models (like deep neural networks, large language models) with the same confidentiality guarantees we saw on CPU but now extends to GPU workloads. We will deploy a Confidential VM with an attached H100 GPU ([Azure's NCc series](https://azure.microsoft.com/en-us/blog/how-azure-is-ensuring-the-future-of-gpus-is-confidential/?msockid=2a5e7f6d63ca67d3000a697162ed6667), e.g., [Standard_NCC40ads_H100_v5](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nccadsh100v5-series?tabs=sizebasic)) and run an AI inference service on it. We'll show how the model's weights and the user's inputs (prompts) are protected.
 
 ## Why Confidential GPUs for AI?
 Many AI workloads require GPUs for efficient computation. Until recently, confidential computing was CPU-only, meaning you couldn't process large neural nets without exposing data to the GPU. Now, with [NVIDIA's confidential computing features on H100 GPUs](https://developer.nvidia.com/blog/confidential-computing-on-h100-gpus-for-secure-and-trustworthy-ai/), the [TEE](https://learn.microsoft.com/en-us/azure/confidential-computing/trusted-execution-environment) extends to GPU memory as well. This is critical for AI for several reasons.
@@ -32,9 +31,6 @@ We will achieve this by leveraging the following concepts:
 
 <details>
 <summary>Click here to expand if you want to deep dive even more in those concepts</summary>
-
-- Confidential AI:
-  - [Confidential AI Overview](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-ai)
 
 - DEK, KEK and Master Key Management:
   - [Azure Data Encryption at Rest](https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-atrest)
