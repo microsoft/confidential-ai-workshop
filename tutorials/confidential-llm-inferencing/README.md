@@ -365,6 +365,32 @@ az vm create `
   --public-ip-sku Standard
 ```
 
+> [!IMPORTANT]
+> Read through this section if you have set your Customer Managed Key for OS disk encryption (DES)
+> 
+> If you have set your Customer Managed Key (CMK) for OS disk encryption using a Disk Encryption Set (DES), you need to pass another parameter `--os-disk-secure-vm-disk-encryption-set $DES_ID` to the `az vm create` command. This parameter links the VM's OS disk encryption to your specified key in Key Vault:
+>
+> ```powershell
+> az vm create `
+>  --resource-group $RESOURCE_GROUP `
+>  --name $VM_NAME `
+>  --image "Canonical:0001-com-ubuntu-confidential-vm-jammy:22_04-lts-cvm:latest" `
+>  --size $VM_SKU `
+>  --admin-username $ADMIN_USERNAME `
+>  --ssh-key-values "$SSH_KEY_PATH" `
+>  --vnet-name $VNET_NAME `
+>  --subnet "default" `
+>  --security-type "ConfidentialVM" `
+>  --os-disk-size-gb 100 `
+>  --os-disk-security-encryption-type "DiskWithVMGuestState" `
+>  --os-disk-secure-vm-disk-encryption-set $DES_ID `
+>  --enable-vtpm true `
+>  --enable-secure-boot true `
+>  --assign-identity "[system]" `
+>  --public-ip-sku Standard
+> ```
+> Make sure to replace `$DES_ID` with the actual resource ID of your Disk Encryption Set
+
 #### 5.2. Assign Key Vault Permissions to the VM's Identity
 After the VM is created, we need to assign the Key Vault permissions to the VM's managed identity. This allows the VM to access the Key Vault and retrieve the wrapped model key.
 
