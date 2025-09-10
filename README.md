@@ -3,7 +3,8 @@
 
 Welcome to the Confidential AI Workshop! This repository provides a series of hands-on tutorials to help you build and deploy secure and private AI solutions using **[Azure Confidential Computing](https://learn.microsoft.com/en-us/azure/confidential-computing/)**.
 
-> **⚠️ Disclaimer:** This repository is intended for educational purposes only. It is not recommended for production use without further security review and customization to meet your specific requirements.
+> [!CAUTION]
+> This repository is intended for educational purposes only. It is not recommended for production use without further security review and customization to meet your specific requirements.
 
 ## What is Confidential AI?
 
