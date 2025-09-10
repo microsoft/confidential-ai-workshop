@@ -19,6 +19,42 @@
 
 - **Azure Key Vault**: For our purposes, Key Vault Premium provides the SKR functionality. We will generate or upload a key to Key Vault that will be used to encrypt our dataset. The Key Vault will be configured with an SKR policy trusting our VM's attestation. When our code in the VM starts, it will call Key Vault (via a secure attested channel) to get the key. This process ensures the key only goes to our code if the environment is right.
 
+<details>
+<summary>Click here to expand if you want to deep dive even more in those concepts</summary>
+
+- Confidential AI:
+  - [Confidential AI Overview](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-ai)
+
+- DEK, KEK and Master Key Management:
+  - [Azure Data Encryption at Rest](https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-atrest)
+  - [Unbderstanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
+
+- Confidential VM:
+  - [About Azure confidential VMs](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-vm-overview)
+  - [Azure Confidential VM options](https://learn.microsoft.com/en-us/azure/confidential-computing/virtual-machine-options)
+  - [Thomas Van Laere | Azure Confidential Computing: IaaS](https://thomasvanlaere.com/posts/2022/04/azure-confidential-computing-iaas/)
+
+- Os disk encryption with Customer Managed Key (CMK)
+  - [Azure Confidential computing VM and OS disk encryption through HSM backed key CMK](https://techcommunity.microsoft.com/blog/azureconfidentialcomputingblog/azure-confidential-computing-vm-and-os-disk-encryption-through-hsm-backed-key-cm/4408926)
+
+- Attestation:
+  - [Azure Attestation Overview](https://learn.microsoft.com/en-us/azure/confidential-computing/attestation-overview)
+  - [Example of an Azure Attestation token](https://learn.microsoft.com/en-us/azure/attestation/attestation-token-examples#sample-jwt-generated-for-sev-snp-attestation)
+
+- Secure Key Release:
+  - [Azure Key Vault Overview](https://learn.microsoft.com/en-us/azure/key-vault/general/overview)
+  - [What is Azure Key Vault?](https://learn.microsoft.com/en-us/azure/key-vault/general/basic-concepts)
+  - [Secure Key Release with Azure Key Vault and Azure Confidential Computing](https://learn.microsoft.com/en-us/azure/confidential-computing/concept-skr-attestation)
+  - [Azure Key Vault secure key release policy grammar](https://learn.microsoft.com/en-us/azure/key-vault/keys/policy-grammar)
+
+- Application/script running within a TEE doing a remote attestation:
+  - [Secure Key Release with Azure Key Vault and application on Confidential VMs with AMD SEV-SNP](https://learn.microsoft.com/en-us/azure/confidential-computing/skr-flow-confidential-vm-sev-snp?tabs=windows)
+  - [What is guest attestation for confidential VMs?](https://learn.microsoft.com/en-us/azure/confidential-computing/guest-attestation-confidential-vms)
+  - [Thomas Van Laere | Azure Confidential Computing: Secure Key Release](https://thomasvanlaere.com/posts/2022/12/azure-confidential-computing-secure-key-release/)
+  - [Thomas Van Laere | Azure Confidential Computing: Secure Key Release Part 2](https://thomasvanlaere.com/posts/2023/10/azure-confidential-computing-secure-key-release-part-2/)
+
+</details>
+
 ## Step-by-Step: Deploying a Confidential VM via Azure CLI
 
 We will use the Azure CLI to set up our confidential VM environment. This approach makes the tutorial easily reproducible for anyone with an Azure subscription and the appropriate permissions. Here's an outline of the steps we'll take:
@@ -100,7 +136,7 @@ The command will return a JSON object confirming that the resource group was cre
 For this tutorial, we will use the **Premium SKU of Azure Key Vault**. It provides the necessary Secure Key Release (SKR) functionality backed by FIPS 140-2 Level 2 validated HSMs and is significantly more cost-effective for learning and demonstration purposes.
 
 > [!TIP]
-> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](./Azure-Managed-HSM.md) (coming soon).
+> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](./Azure-Managed-HSM.md) *(coming soon)*.
 
 Azure offers two approaches for configuring release policies:
 
@@ -390,6 +426,8 @@ For production deployments, consider these additional security measures:
 3. **Network Isolation**: In production, use private endpoints and network restrictions
 
 At this point, we have a Key Vault and a key ready for Secure Key Release. With this setup, your key has a comprehensive release policy that will only allow it to be released to a Confidential VM that can provide valid attestation evidence meeting all security requirements.
+
+#### 3.8 (Optional). Set up OS Disk Encryption with Customer-Managed Keys (CMK)
 
 > [!TIP]
 > Need OS-disk encryption with your own keys (CMK)? 
