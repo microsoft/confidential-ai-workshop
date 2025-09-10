@@ -1,4 +1,4 @@
-# Confidential VM (CPU) – Foundations and Secure ML Demo
+# Confidential ML Training – Foundations of SKR and Confidential VM (CPU)
 
 > **Focus**
 > This tutorial establishes the foundation. We will create a Confidential VM (CVM) using only CPU (no GPU), and demonstrate a simple machine learning workload using sensitive data. This part introduces core concepts: what Confidential VMs are, how data and code are protected in a TEE, and why attestation and secure key release matter. We'll go step-by-step through deploying a confidential VM with Azure CLI and then run an ML task that operates on encrypted data inside the TEE. The scenario emphasizes why this technology is used over standard VMs.
