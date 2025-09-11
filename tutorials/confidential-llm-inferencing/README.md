@@ -658,16 +658,16 @@ sudo bash ./step-0-prepare-kernel.sh
 > [!NOTE]
 > Please note that this step will involve a reboot of the VM, so you will need to wait for the VM to come back online before proceeding with the next steps.
 > 
-1. Install the GPU driver:
+2. Install the GPU driver:
 ```bash
 cd ~/az-cgpu-onboarding/src
 sudo bash ./step-1-install-gpu-driver.sh
 ```
-1. After the reboot, SSH back into the VM and run the remaining setup scripts. Now we are finally able to run attestation - you will be able to see the attestation message printed at the bottom:
+3. After the reboot, SSH back into the VM and run the remaining setup scripts. Now we are finally able to run attestation - you will be able to see the attestation message printed at the bottom:
 ```bash
 sudo bash ./step-2-attestation.sh
 ```
-1. Install the GPU tools and libraries. These are tools and packages that will allow you to run various workloads on the GPU.
+4. Install the GPU tools and libraries. These are tools and packages that will allow you to run various workloads on the GPU.
 ```bash
 cd ~/az-cgpu-onboarding/src
 sudo bash ./step-3-install-gpu-tools.sh
