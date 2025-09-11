@@ -119,5 +119,6 @@ After completing this module, jump back to policy authoring in your tutorial of 
 
 | Tutorial                                                 | Continue at                                                    |
 | -------------------------------------------------------- | -------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34)                           |
-| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43)                           |
+| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34-create-the-release-policy-file)                           |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43-definition-of-the-release-policy)                           |
+
