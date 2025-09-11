@@ -81,7 +81,7 @@ Get started by choosing one of the following tutorials. Each one is designed to 
 Before you begin, you will need the following:
 * An **Azure Subscription**. Note: Azure Confidential Computing is not available on free trial accounts.
 * **Azure CLI** version 2.46.0 or later.
-* **PowerShell** (for local scripts) or a **Bash** terminal.
+* **PowerShell**.
 * Sufficient **quota** for the VM SKUs used in the tutorials (e.g., DCasv5-series or NCCadsH100_v5-series).
 
 ## Contributing
