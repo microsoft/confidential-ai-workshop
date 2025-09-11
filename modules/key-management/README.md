@@ -25,7 +25,7 @@ The same Key Vault instance can be reused for: OS‑disk encryption (DES/CMK), d
 
 After completing a key management module, return to the step in your tutorial that first uses the vault (for example, creating a DES for OS‑disk CMK).
 
-| Tutorial                               | Suggested return point                                                                                                 |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**     | [3.8. (Optional) Set up OS Disk Encryption with Customer-Managed Keys (CMK)](../../tutorials/confidential-ml-training/README.md#38-optional-set-up-os-disk-encryption-with-customer-managed-keys-cmk)  |
-| **Confidential LLM Inferencing (GPU)** | [4.6. (Optional) Configure OS Disk Encryption with Customer‑Managed Keys](../../tutorials/confidential-llm-inferencing/README.md#46-optional-configure-os-disk-encryption-with-customer-managed-keys)    |
+| Tutorial                                                 | Continue at                                                    |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34-create-the-release-policy-file) |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43-definition-of-the-release-policy) |
