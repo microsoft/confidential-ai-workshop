@@ -42,9 +42,39 @@ Get started by choosing one of the following tutorials. Each one is designed to 
 
 | Tutorial | Description | Key Concepts |
 |---|---|---|
-| ➡️ **[Confidential ML Training](tutorials/confidential-ml-training/README.md)** | Learn the fundamentals by deploying a CPU-based Confidential VM. You will train a machine learning model on an encrypted dataset that is only ever decrypted inside the TEE. | • Confidential VMs (CVM)<br>• Trusted Execution Environment (TEE)<br>• Guest Attestation<br>• Secure Key Release (SKR)<br>• Data Encryption in Use |
-| ➡️ **[Confidential LLM Inferencing](tutorials/confidential-llm-inferencing/README.md)** | Add GPU acceleration to deploy a Large Language Model (LLM) on a Confidential VM with an NVIDIA H100 GPU. This tutorial shows how to protect both the model's weights and user prompts. | • Confidential GPU VMs<br>• Trusted Execution Environment (TEE)<br>• Guest Attestation<br>• Secure Key Release<br>• Model IP Protection<br>• End-to-End TLS Encryption |
-| ➡️ **[Confidential Whisper Pipeline](tutorials/confidential-whisper-inferencing/README.md)** | Build a complete, end-to-end secure AI pipeline. This tutorial demonstrates how to securely transcribe sensitive audio using Azure's Confidential Whisper service and analyze the transcript with your confidential LLM. | • Oblivious HTTP (OHTTP)<br>• Hybrid Public Key Encryption (HPKE)<br>• Key Management Service (KMS)<br>• Confidential AI Pipelines |
+| ➡️ **[Confidential ML Training](tutorials/confidential-ml-training/README.md)** | Learn the fundamentals by deploying a CPU-based Confidential VM. You will train a machine learning model on an encrypted dataset that is only ever decrypted inside the TEE. | ![CVM-Confidential_VM][badge-cvm] ![TEE-Trusted_Execution_Environment][badge-tee] ![Attestation-Guest_Attestation][badge-attest] ![SKR-Secure_Key_Release][badge-skr] ![Policy-Key_Release_Policy][badge-policy] ![Data-Encryption_in_Use][badge-data] ![DES-OS_Disk_Encryption][badge-des] ![XGB-XGBoost][ml-xgb] ![ML-Binary_Classifier][ml-binary] |
+| ➡️ **[Confidential LLM Inferencing](tutorials/confidential-llm-inferencing/README.md)** | Add GPU acceleration to deploy a Large Language Model (LLM) on a Confidential VM with an NVIDIA H100 GPU. This tutorial shows how to protect both the model's weights and user prompts. | ![CGPU-Confidential_GPU_VM][badge-cgpu] ![TEE-Trusted_Execution_Environment][badge-tee] ![Attestation-Guest_Attestation][badge-attest] ![SKR-Secure_Key_Release][badge-skr] ![Policy-GPU_Aware_Release_Policy][badge-policy-gpu] ![Model-Model_IP_Protection][badge-modelip] ![TLS-End_to_End_TLS][badge-tls] ![DES-OS_Disk_Encryption][badge-des] ![Client-Streamlit_Client_App][badge-client] ![vLLM-LLM_Inference_Server][ml-vllm] ![Local-LLM][ml-local] ![HF-Hugging_Face][ml-hf] ![AML-AzureML_Registry][ml-aml] |
+| ➡️ **[Confidential Whisper Pipeline](tutorials/confidential-whisper-inferencing/README.md)** | Build a complete, end-to-end secure AI pipeline. This tutorial demonstrates how to securely transcribe sensitive audio using Azure's Confidential Whisper service and analyze the transcript with your confidential LLM. | ![OHTTP-Oblivious_HTTP][badge-ohttp] ![HPKE-Hybrid_Public_Key_Encryption][badge-hpke] ![KMS-Key_Management_Service][badge-kms] ![Whisper-Confidential_Whisper][badge-whisper] ![Pipeline-End_to_End_Pipeline][badge-pipeline] ![Client-Streamlit_Client_App][badge-client] |
+
+<!-- Existing badge refs (flat-square). Adjust colors if you like. -->
+[badge-cvm]: https://img.shields.io/badge/CVM-Confidential_VM-6f42c1?style=flat-square
+[badge-tee]: https://img.shields.io/badge/TEE-Trusted_Execution_Environment-0b8a9f?style=flat-square
+[badge-attest]: https://img.shields.io/badge/Attestation-Guest_Attestation-1f6feb?style=flat-square
+[badge-skr]: https://img.shields.io/badge/SKR-Secure_Key_Release-f39c12?style=flat-square
+[badge-policy]: https://img.shields.io/badge/Policy-Key_Release_Policy-64748b?style=flat-square
+[badge-data]: https://img.shields.io/badge/Data-Encryption_in_Use-2ecc71?style=flat-square
+[badge-des]: https://img.shields.io/badge/DES-OS_Disk_Encryption-6366f1?style=flat-square
+
+[badge-cgpu]: https://img.shields.io/badge/CGPU-Confidential_GPU_VM-7c3aed?style=flat-square
+[badge-policy-gpu]: https://img.shields.io/badge/Policy-GPU_Aware_Release_Policy-475569?style=flat-square
+[badge-modelip]: https://img.shields.io/badge/Model-Model_IP_Protection-8e44ad?style=flat-square
+[badge-tls]: https://img.shields.io/badge/TLS-End_to_End_TLS-10b981?style=flat-square
+
+[badge-ohttp]: https://img.shields.io/badge/OHTTP-Attested_Oblivious_HTTP-0ea5e9?style=flat-square
+[badge-hpke]: https://img.shields.io/badge/HPKE-Hybrid_Public_Key_Encryption-06b6d4?style=flat-square
+[badge-kms]: https://img.shields.io/badge/KMS-Key_Management_Service-10b981?style=flat-square
+[badge-whisper]: https://img.shields.io/badge/Whisper-Confidential_Whisper-d946ef?style=flat-square
+[badge-pipeline]: https://img.shields.io/badge/Pipeline-End_to_End_Pipeline-7c3aed?style=flat-square
+[badge-client]: https://img.shields.io/badge/Client-Streamlit_Client_App-94a3b8?style=flat-square
+
+<!-- NEW ML badge refs -->
+[ml-xgb]: https://img.shields.io/badge/XGB-XGBoost-22c55e?style=flat-square
+[ml-binary]: https://img.shields.io/badge/ML-Binary_Classifier-16a34a?style=flat-square
+
+[ml-vllm]: https://img.shields.io/badge/vLLM-LLM_Inference_Server-0ea5e9?style=flat-square
+[ml-local]: https://img.shields.io/badge/Local-LLM-0891b2?style=flat-square
+[ml-hf]: https://img.shields.io/badge/HF-Hugging_Face-38bdf8?style=flat-square
+[ml-aml]: https://img.shields.io/badge/AML-AzureML_Registry-0284c7?style=flat-square
 
 ## Prerequisites
 
