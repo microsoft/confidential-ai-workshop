@@ -430,8 +430,14 @@ At this point, we have a Key Vault and a key ready for Secure Key Release. With 
 #### 3.8. (Optional) Set up OS Disk Encryption with Customer-Managed Keys (CMK)
 
 > [!TIP]
-> Need OS-disk encryption with your own keys (CMK)? 
-> Use the module: [OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/os-disk-encryption-cmk.md), then return here to continue deployment.
+> Need OS-disk encryption with your own keys (CMK)?
+> Use one of the following modules based on your preferred key management solution: 
+> | Key Management Service | Module |
+> |-----------------------|--------|
+>  | Azure Key Vault       | [OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/os-disk-encryption-cmk.md) |
+> | Azure Managed HSM     | [OS Disk Encryption with Customer-Managed Keys (DES) using Managed HSM](../../modules/os-disk-encryption/os-disk-encryption-cmk-mhsm.md) |
+> 
+> Then return here to continue deployment.
 
 
 ### 4. Deploy the Confidential VM
