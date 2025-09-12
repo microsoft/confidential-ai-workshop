@@ -286,11 +286,15 @@ The Secure Key Release (SKR) policy is a JSON document that defines the conditio
 > - `x-ms-isolation-tee.x-ms-attestation-type`: **Is this a real Confidential VM?** The policy first checks if the request is coming from a genuine Azure Confidential VM using AMD's security technology (sevsnpvm). This is like checking the ID card to make sure it's the right type.
 > - `x-ms-isolation-tee.x-ms-compliance-status`: **Is it configured securely?** It then verifies that the VM is "Azure compliant," meaning security features like Secure Boot are enabled. This is like making sure the ID card hasn't been tampered with.
 
+Store the authority URL for later use:
+```powershell
+$ATTEST_URL = "https://sharedeus2.eus2.attest.azure.net"
+```
+
 > [!TIP]
 > Need a **dedicated attestation provider** instead of the shared endpoint?
 > Follow: [Provision a Dedicated Microsoft Azure Attestation Provider](../../modules/attestation/custom-attestation-provider.md),
 > then set the `authority` in `release-policy.json` to your attestation URL and store it in `$ATTEST_URL`.
-
 
 #### 4.4. Create the wrapping key
 Now we will create the key that will be used to wrap the model encryption key with the policy that we defined earlier. This key will be used to encrypt the model weights and will be stored in the Key Vault.
@@ -733,9 +737,9 @@ sudo apt-get install -y \
 ##### 8.4.2. Install the Azure Guest Attestation Library
 The latest attestation package can be found here [https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/](https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/)
 ```bash
-wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.1.2_amd64.deb
-sudo dpkg -i azguestattestation1_1.1.2_amd64.deb
-rm azguestattestation1_1.1.2_amd64.deb
+wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.0.5_amd64.deb
+sudo dpkg -i azguestattestation1_1.0.5_amd64.deb
+rm azguestattestation1_1.0.5_amd64.deb
 ```
 
 ##### 8.4.3. Build the Secure Key Release Application
