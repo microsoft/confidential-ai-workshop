@@ -8,7 +8,7 @@ Use this module to set up OS disk encryption for Confidential VMs with your own 
 
 * Azure CLI installed and logged in (`az login`).
 * PowerShell with `Microsoft.Graph` module available (for service principal registration).
-* Sufficient permissions to create Azure AD applications/service principals, assign RBAC roles, and manage Key Vault keys.
+* Sufficient permissions to create Entra ID applications/service principals, assign RBAC roles, and manage Key Vault keys.
 * Existing objects used by your tutorial environment:
 
   ```powershell

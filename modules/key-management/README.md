@@ -2,7 +2,20 @@
 
 ## Overview
 
-This folder contains plug‑in modules for key management choices used across the tutorials. Start here to pick your path.
+This folder contains plug‑in modules for key management choices used across the tutorials.
+
+## Microsoft’s commitment​
+
+Azure Key Vault and Azure Key Vault Managed Hardware Security Module (HSM) are designed, deployed and operated such that Microsoft and its agents are precluded from accessing, using or extracting any data stored in the service, including cryptographic keys.​
+
+​
+Customer keys that are securely created and/or securely imported into the HSM devices, unless set otherwise by the customer, are not marked extractable and are never visible in plaintext to Microsoft systems, employees, or our agents.​
+
+​
+The Key Vault team explicitly does not have operating procedures for granting such access to Microsoft and its agents, even if authorized by a customer.​
+
+​
+We will not attempt to defeat customer-controlled encryption features like Azure Key Vault or Azure Key Vault Managed HSM. If faced with a legal demand to do so, we would challenge such a demand on any lawful basis, consistent with our customer commitments as outlined in this [blog](https://blogs.microsoft.com/on-the-issues/2020/11/19/defending-your-data-edpb-gdpr/).​
 
 ## Choose your path
 
@@ -25,7 +38,7 @@ The same Key Vault instance can be reused for: OS‑disk encryption (DES/CMK), d
 
 After completing a key management module, return to the step in your tutorial that first uses the vault (for example, creating a DES for OS‑disk CMK).
 
-| Tutorial                               | Suggested return point                                                                                                 |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**     | [3.8. (Optional) Set up OS Disk Encryption with Customer-Managed Keys (CMK)](../../tutorials/confidential-ml-training/README.md#38-optional-set-up-os-disk-encryption-with-customer-managed-keys-cmk)  |
-| **Confidential LLM Inferencing (GPU)** | [4.6. (Optional) Configure OS Disk Encryption with Customer‑Managed Keys](../../tutorials/confidential-llm-inferencing/README.md#46-optional-configure-os-disk-encryption-with-customer-managed-keys)    |
+| Tutorial                                                 | Continue at                                                    |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34-create-the-release-policy-file) |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43-definition-of-the-release-policy) |

@@ -70,7 +70,7 @@ First, let's ensure you have the necessary tools and access rights.
 
 - **Install Azure CLI**: If you don't already have it, please [install the Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli). Confidential VM features require version 2.38.0 or newer. You can verify your installed version by running:
   ```powershell
-  az --version`.
+  az --version
   ```
 
 - **Log in to Azure**: Open your terminal and run the following command. A browser window will open, prompting you to sign in to your Azure account.
@@ -274,7 +274,7 @@ The command will return a JSON object with details about the newly created Key V
 Since the Key Vault is configured to use Azure RBAC for authorization, you must assign yourself a role to manage keys. We will assign the `Key Vault Crypto Officer` role, which provides the necessary permissions to create, manage, and use keys.
 
 ```powershell
-$CURRENT_USER_ID = $(az ad signed-in-user show --query "id" -o tsv)
+$CURRENT_USER_ID=$(az ad signed-in-user show --query "id" -o tsv)
 if (-not $CURRENT_USER_ID) {
     throw "Unable to retrieve user ID."
 }
@@ -411,8 +411,8 @@ You should see this output:
 
 #### 3.7. Store the KEK identifiers for later use
 ```powershell
-$keyJson  = az keyvault key show --vault-name $KEY_VAULT_NAME --name $KEK_NAME -o json | ConvertFrom-Json
-$KEK_KID  = $keyJson.key.kid
+$keyJson = az keyvault key show --vault-name $KEY_VAULT_NAME --name $KEK_NAME -o json | ConvertFrom-Json
+$KEK_KID = $keyJson.key.kid
 $VAULT_ID = az keyvault show --name $KEY_VAULT_NAME --query id -o tsv
 $KEK_RESOURCE  = "$VAULT_ID/keys/$KEK_NAME"
 ```
