@@ -97,28 +97,84 @@ $KEY_VAULT_URI = az keyvault show --name $KEY_VAULT_NAME --resource-group $RESOU
 az keyvault show --name $KEY_VAULT_NAME --resource-group $RESOURCE_GROUP -o table
 ```
 
+### 5) Author the SKR release policy
+
+Create **Release Policy** in a json file named `release_policy.json` with claims that match your attestation flow. Example (SEV‑SNP CVM, shared West Europe MAA):
+
+```json
+{
+  "version": "1.0.0",
+  "anyOf": [
+    {
+      "authority": "https://sharedweu.weu.attest.azure.net",
+      "allOf": [
+        { "claim": "x-ms-isolation-tee.x-ms-attestation-type",  "equals": "sevsnpvm" },
+        { "claim": "x-ms-isolation-tee.x-ms-compliance-status", "equals": "azure-compliant-cvm" }
+      ]
+    }
+  ]
+}
+```
+
+### 6) Create an exportable KEK with the release policy
+
+```powershell
+az keyvault key create `
+  --vault-name $KEY_VAULT_NAME `
+  --name $KEK_NAME `
+  --kty RSA-HSM `
+  --exportable true `
+  --policy @release_policy.json
+```
+
+You can now verify that the policy was applied:
+
+```powershell
+az keyvault key show `
+  --vault-name $KEY_VAULT_NAME `
+  --name $KEK_NAME `
+  --query "releasePolicy" -o json
+```
+
+Moreover, you can store its identifiers for reuse:
+
+```powershell
+$keyJson = az keyvault key show --vault-name $KEY_VAULT_NAME --name $KEK_NAME -o json | ConvertFrom-Json
+$KEK_KID = $keyJson.key.kid
+$KEK_RESOURCE = "$VAULT_ID/keys/$KEK_NAME"
+```
+
+
+### 7) (Optional) OS‑disk encryption with CMK
+
+If you plan to use this key for OS-disk encryption with Customer-Managed Keys (CMK) in a Disk Encryption Set (DES), you can follow the steps in the [OS Disk Encryption with CMK backed by Azure Key Vault Premium](../os-disk-encryption/os-disk-encryption-cmk.md) module using the AKV that you created by following the previous steps (use `$KEY_VAULT_NAME` and `$VAULT_ID`).
+
 ---
 
 ## Exports (available after this module)
 
+Key Vault details for reuse:
+
 ```powershell
 $KEY_VAULT_NAME
-$VAULT_ID
 $KEY_VAULT_URI
+$VAULT_ID
 ```
 
-> \[!TIP]
-> If you prefer **Managed HSM** for production-grade isolation, use the alternative module
-> `modules/key-management/Managed-HSM.md` *(coming soon)*, then follow the same policy/key steps in your tutorial with MHSM switches (`--hsm-name`).
+Key details for reuse:
 
----
+```powershell
+$KEK_NAME
+$KEK_KID
+$KEK_RESOURCE
+```
 
 ## Continue your tutorial
 
-After completing this module, jump back to policy authoring in your tutorial of choice:
+After completing this module, jump back to the Confidential VM deployment in your tutorial of choice:
 
-| Tutorial                                                 | Continue at                                                    |
-| -------------------------------------------------------- | -------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34-create-the-release-policy-file)                           |
-| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43-definition-of-the-release-policy)                           |
+| Tutorial                                                 | Continue at                                                                                                                            |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Confidential ML Training (CPU)**                       | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                       |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [Step 5: Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#step-5-deploy-the-confidential-gpu-vm) |
 

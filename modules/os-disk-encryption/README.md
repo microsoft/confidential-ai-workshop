@@ -9,7 +9,8 @@ Confidential VMs support OS‑disk encryption using either **platform‑managed 
 | Option                          | When to choose                                                        | Module                                                                                                                                             |
 | ------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Platform‑Managed Keys (PMK)** | Simpler setup; you don’t need control over the key lifecycle.         | Use Azure’s default encryption (no extra steps in this repo).                                                                                             |
-| **Customer‑Managed Keys (CMK)** | You need key ownership, rotation, revocation, or compliance controls. | Provision a **Disk Encryption Set** that points to your Key Vault key and grant the required RBAC roles. See [Customer‑Managed Key (CMK)](./os-disk-encryption-cmk.md) module. |
+| **Customer‑Managed Keys (CMK) backed by Azure Key Vault** | You need key ownership, rotation, revocation, or compliance controls. | Provision a **Disk Encryption Set** that points to your Azure Key Vault key and grant the required RBAC roles. See [Customer‑Managed Key (CMK)](./os-disk-encryption-cmk.md) module. |
+| **Customer‑Managed Keys (CMK) backed by Azure Managed HSM** | You need key ownership, rotation, revocation, or compliance controls, and prefer a managed HSM. | Provision a **Disk Encryption Set** that points to your Azure Managed HSM key and grant the required RBAC roles. See [Customer‑Managed Key (CMK) using Managed HSM](./os-disk-encryption-cmk-mhsm.md) module. |
 
 > DES can be used across both CPU and GPU Confidential VM tutorials in this repository.
 
@@ -30,5 +31,5 @@ After finishing your chosen module, return to your tutorial flow:
 
 | Tutorial                               | Continue at                                                                                                                            |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**     | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                       |
+| **Confidential ML Training (CPU)**     | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4)                       |
 | **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm) |

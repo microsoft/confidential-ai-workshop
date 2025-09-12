@@ -220,7 +220,7 @@ $KEK_RESOURCE = "$HSM_RESOURCE_ID/keys/$KEK_NAME"
 Now you have a Managed HSM with an exportable key protected by a release policy. You can use this key for encrypting data and securely releasing it to compliant Confidential VMs.
 
 ### 7) (Optionnal) OS-disk encryption with CMK for DES
-If you plan to use this key for OS-disk encryption with Customer-Managed Keys (CMK) in a Disk Encryption Set (DES), you can follow the steps in the [OS Disk Encryption with CMK](../os-disk-encryption/os-disk-encryption-cmk.md) module, using the `$KEK_KID` and `$KEK_RESOURCE` variables for the key URL and scope.
+If you plan to use this key for OS-disk encryption with Customer-Managed Keys (CMK) in a Disk Encryption Set (DES), you can follow the steps in the [OS Disk Encryption with CMK backed by Managed HSM](../os-disk-encryption/os-disk-encryption-cmk-mHSM.md) module using the Managed HSM that you created by following the previous steps (use `$HSM_NAME` and `$HSM_RESOURCE_ID`).
 
 ## Exports (available after this module)
 

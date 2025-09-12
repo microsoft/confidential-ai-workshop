@@ -22,7 +22,7 @@ We will not attempt to defeat customer-controlled encryption features like Azure
 | Option                        | When to choose                                                                               | Module                                                              |
 | ----------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | **Azure Key Vault (Premium)** | Standard choice for most scenarios; integrates with RBAC and DES; supports release policies. | [Provision Azure Key Vault (Premium)](./Azure-Key-Vault-Premium.md) |
-| **Managed HSM**               | (Coming soon) For dedicated, FIPS 140‑2 Level 3 validated HSM requirements.                  | *Not covered in this repo yet.*                                     |
+| **Managed HSM**               | For dedicated, FIPS 140‑2 Level 3 validated HSM requirements.                  | [Provision Managed HSM](./Managed-HSM.md)                           |
 
 ## Reuse across tutorials
 
@@ -38,7 +38,7 @@ The same Key Vault instance can be reused for: OS‑disk encryption (DES/CMK), d
 
 After completing a key management module, return to the step in your tutorial that first uses the vault (for example, creating a DES for OS‑disk CMK).
 
-| Tutorial                                                 | Continue at                                                    |
-| -------------------------------------------------------- | -------------------------------------------------------------- |
-| **Confidential ML Training (CPU)**                       | [3.4. Create the release policy file](../../tutorials/confidential-ml-training/README.md#34-create-the-release-policy-file) |
-| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [4.3. Definition of the release policy](../../tutorials/confidential-llm-inferencing/README.md#43-definition-of-the-release-policy) |
+| Tutorial                                                 | Continue at                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| **Confidential ML Training (CPU)**                       | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                         |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm)     

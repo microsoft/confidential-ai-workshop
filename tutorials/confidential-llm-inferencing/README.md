@@ -340,9 +340,14 @@ $KEK_RESOURCE = "$VAULT_ID/keys/$KEK_NAME"
 #### 4.6. (Optional) Configure OS Disk Encryption with Customer‑Managed Keys
 
 > [!TIP]
-> Want **OS-disk encryption with your own key (CMK via Disk Encryption Set)**?
-> Use: [Configure OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/os-disk-encryption-cmk.md),
-> then add your DES to the VM create command (e.g., `--os-disk-encryption-set $DES_ID`) and continue.
+> Need OS-disk encryption with your own keys (CMK)?
+> Use one of the following modules based on your preferred key management solution: 
+> | Key Management Service | Module |
+> |-----------------------|--------|
+>  | Azure Key Vault       | [OS Disk Encryption with Customer-Managed Keys (DES)](../../modules/os-disk-encryption/os-disk-encryption-cmk.md) |
+> | Azure Managed HSM     | [OS Disk Encryption with Customer-Managed Keys (DES) using Managed HSM](../../modules/os-disk-encryption/os-disk-encryption-cmk-mhsm.md) |
+> 
+> Then return here to continue deployment.
 
 
 ### 5. Deploy the Confidential GPU VM

@@ -1,30 +1,32 @@
-# Configure OS Disk Encryption with Customer‑Managed Keys backed by Azure Key Vault (Premium)
+# Configure OS Disk Encryption with Customer‑Managed Keys backed by a Managed HSM
 
 ## Overview
 
-Use this module to set up OS disk encryption for Confidential VMs with your own keys by creating and wiring a **Disk Encryption Set (DES)**.
+Use this module to set up OS disk encryption for Confidential VMs with your own keys by creating and wiring a **Disk Encryption Set (DES)** backed by an **Azure Key Vault Managed HSM**.
 
 ## Prerequisites
 
 * Azure CLI installed and logged in (`az login`).
 * PowerShell with `Microsoft.Graph` module available (for service principal registration).
-* Sufficient permissions to create Entra ID applications/service principals, assign RBAC roles, and manage Key Vault keys.
-* Existing objects used by your tutorial environment (example below):
+* Sufficient permissions to create Entra ID applications/service principals, assign **Managed HSM local RBAC** roles, and manage keys.
+* Existing variables from your environment (examples below):
 
   ```powershell
   $RESOURCE_GROUP = "MyConfidentialRG"
-  $KEY_VAULT_NAME = "MyConfidentialKV"
-  $VAULT_ID = "/subscriptions/<subId>/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$KEY_VAULT_NAME"
+  $HSM_NAME = "MyMHSM-<your value>"
+  $HSM_RESOURCE_ID = "/subscriptions/<subId>/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/managedHSMs/$HSM_NAME"
   ```
 
 > [!TIP]
-> If you haven’t created your Azure Key Vault (Premium) yet, run the module [Provision Azure Key Vault (Premium)](../key-management/Azure-Key-Vault-Premium.md) and export `$KEY_VAULT_NAME` / `$VAULT_ID` first.
+> If you haven’t created/activated your Managed HSM yet, run the module [Provision a Managed HSM for SKR](../key-management/Managed-HSM.md) and export `$HSM_NAME` / `$HSM_RESOURCE_ID` first.
+
+
 
 ### 1. Register the Confidential VM Orchestrator Service Principal
 
 To enable advanced capabilities like OS disk encryption with your own keys, you must register the "Confidential VM Orchestrator" service principal in your Azure tenant. This is a one-time setup task.
 
-**Connect to Microsoft Graph**: Open a PowerShell terminal to run the following commands. You'll need the `Microsoft.Graph` module. If it's not installed, run `Install-Module Microsoft.Graph -Scope CurrentUser` to add it.
+* **Connect to Microsoft Graph**: Open a PowerShell terminal to run the following commands. You'll need the `Microsoft.Graph` module. If it's not installed, run `Install-Module Microsoft.Graph -Scope CurrentUser` to add it.
 
   ```powershell
   # Replace "your-tenant-id" with your actual Azure Tenant ID
@@ -40,18 +42,17 @@ Grab its objectId for role assignment (RBAC)
 $CVM_ORCH_SP_ID = az ad sp show --id "bf7b6499-ff71-4aa2-97a4-f372087be7f0" --query id -o tsv
 ```
 
-### 2. Create a Key for Disk Encryption using your created Key Vault
+### 2. Create a Key for Disk Encryption using your Managed HSM
 
-Now that you have registered the Confidential VM Orchestrator, you can create a key in your Key Vault to be used for OS disk encryption.
+Now that you have registered the Confidential VM Orchestrator, create a key in your **Managed HSM** to be used for OS disk encryption.
 
 Create the key name:
 
 ```powershell
 $OS_KEY_NAME = "OsDiskKey"
 
-# Create an RSA-HSM key with the standard Confidential VM release policy
 az keyvault key create `
-  --vault-name $KEY_VAULT_NAME `
+  --hsm-name $HSM_NAME `
   --name $OS_KEY_NAME `
   --kty RSA-HSM `
   --exportable true `
@@ -61,9 +62,10 @@ az keyvault key create `
 Store its identifiers:
 
 ```powershell
-$osKeyJson = az keyvault key show --vault-name $KEY_VAULT_NAME --name $OS_KEY_NAME -o json | ConvertFrom-Json
+$osKeyJson  = az keyvault key show --hsm-name $HSM_NAME --name $OS_KEY_NAME -o json | ConvertFrom-Json
 $OS_KEY_KID = $osKeyJson.key.kid
-$OS_KEY_RES = "$VAULT_ID/keys/$OS_KEY_NAME"
+$OS_KEY_RES = "$HSM_RESOURCE_ID/keys/$OS_KEY_NAME"
+$HSM_KEY_SCOPE = "/keys/$OS_KEY_NAME"
 ```
 
 ### 3. Create a Disk Encryption Set (DES) that points to the OS-disk key
@@ -85,29 +87,29 @@ $DES_PRINCIPAL_ID = az disk-encryption-set show -g $RESOURCE_GROUP -n $DES_NAME 
 $DES_ID = az disk-encryption-set show -g $RESOURCE_GROUP -n $DES_NAME --query id -o tsv
 ```
 
-### 4. RBAC assignments
+### 4. RBAC assignments (Managed HSM local RBAC)
 
-**DES managed identity → Encryption role on the OS-disk key**
+* **DES managed identity → Encryption role on the OS-disk key**
 
 ```powershell
-az role assignment create `
-  --role "Key Vault Crypto Service Encryption User" `
+az keyvault role assignment create `
+  --hsm-name $HSM_NAME `
+  --role "Managed HSM Crypto Service Encryption User" `
   --assignee-object-id $DES_PRINCIPAL_ID `
-  --assignee-principal-type ServicePrincipal `
-  --scope $OS_KEY_RES
+  --scope $HSM_KEY_SCOPE
 ```
 
-**Confidential VM Orchestrator SP → Release role on the OS-disk key**
+* **Confidential VM Orchestrator SP → Release role on the OS-disk key**
 
 ```powershell
-az role assignment create `
-  --role "Key Vault Crypto Service Release User" `
+az keyvault role assignment create `
+  --hsm-name $HSM_NAME `
+  --role "Managed HSM Crypto Service Release User" `
   --assignee-object-id $CVM_ORCH_SP_ID `
-  --assignee-principal-type ServicePrincipal `
-  --scope $OS_KEY_RES
+  --scope $HSM_KEY_SCOPE
 ```
 
-> These two RBAC roles map to the access-policy permissions wrapKey/unwrapKey/get for DES, and get/release for the orchestrator.
+> These two RBAC roles map to the access-policy permissions **wrapKey/unwrapKey/get** for DES, and **get/release** for the orchestrator.
 
 ---
 
@@ -117,3 +119,4 @@ az role assignment create `
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Confidential ML Training (CPU)**     | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                       |
 | **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm) |
+
