@@ -57,7 +57,7 @@
 
 ## Step-by-Step: Deploying a Confidential VM via Azure CLI
 
-We will use the Azure CLI to set up our confidential VM environment. This approach makes the tutorial easily reproducible for anyone with an Azure subscription and the appropriate permissions. Here's an outline of the steps we'll take:
+We will use the Azure CLI to set up our confidential VM environment. This approach makes the tutorial easily reproducible for anyone with an Azure subscription and the appropriate permissions.
 
 ### 1. Prerequisites & Setup
 
