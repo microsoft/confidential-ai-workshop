@@ -46,7 +46,7 @@ az keyvault create `
 >
 > * `--retention-days`: Soft‑delete retention for the HSM. The HSM remains billable until it is purged after this period.
 >
-> * `--enable-purge-protection true` (optional): Prevents permanent deletion during the retention window—even by privileged users. Once enabled, it cannot be turned off.
+> * `--enable-purge-protection true` (optional): Prevents permanent deletion during the retention window even by privileged users. Once enabled, it cannot be turned off.
 >
 > Managed HSM always uses **local RBAC** for the data plane (there is no `--enable-rbac-authorization` switch like Key Vault).
 
@@ -154,6 +154,7 @@ az keyvault role assignment create `
   --scope /keys
 ```
 
+> [!NOTE]
 > Common local RBAC roles include **Managed HSM Crypto Officer**, **Managed HSM Crypto User**, and **Managed HSM Crypto Auditor**. For more details, see [About Managed HSM local RBAC built-in roles](https://learn.microsoft.com/en-us/azure/key-vault/managed-hsm/built-in-roles).
 
 ### 5) Author the key release policy
@@ -246,5 +247,6 @@ After completing this module, jump back to the Confidential VM deployment in you
 | -------------------------------------------------------- | ------------------------------------------------------------ |
 | **Confidential ML Training (CPU)**                       | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                         |
 | **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm)                         |
+
 
 
