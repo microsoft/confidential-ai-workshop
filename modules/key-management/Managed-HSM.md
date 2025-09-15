@@ -220,7 +220,7 @@ $KEK_RESOURCE = "$HSM_RESOURCE_ID/keys/$KEK_NAME"
 Now you have a Managed HSM with an exportable key protected by a release policy. You can use this key for encrypting data and securely releasing it to compliant Confidential VMs.
 
 ### 7) (Optionnal) OS-disk encryption with CMK for DES
-If you plan to use this key for OS-disk encryption with Customer-Managed Keys (CMK) in a Disk Encryption Set (DES), you can follow the steps in the [OS Disk Encryption with CMK backed by Managed HSM](../os-disk-encryption/os-disk-encryption-cmk-mHSM.md) module using the Managed HSM that you created by following the previous steps (use `$HSM_NAME` and `$HSM_RESOURCE_ID`).
+If you plan to use this key for OS-disk encryption with Customer-Managed Keys (CMK) in a Disk Encryption Set (DES), you can follow the steps in the [OS Disk Encryption with CMK backed by Managed HSM](../os-disk-encryption/os-disk-encryption-cmk-mhsm.md) module using the Managed HSM that you created by following the previous steps (use `$HSM_NAME` and `$HSM_RESOURCE_ID`).
 
 ## Exports (available after this module)
 
@@ -246,4 +246,5 @@ After completing this module, jump back to the Confidential VM deployment in you
 | -------------------------------------------------------- | ------------------------------------------------------------ |
 | **Confidential ML Training (CPU)**                       | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                         |
 | **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm)                         |
+
 
