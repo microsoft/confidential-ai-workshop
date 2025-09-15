@@ -176,5 +176,6 @@ After completing this module, jump back to the Confidential VM deployment in you
 | Tutorial                                                 | Continue at                                                                                                                            |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **Confidential ML Training (CPU)**                       | [4. Deploy the Confidential VM](../../tutorials/confidential-ml-training/README.md#4-deploy-the-confidential-vm)                       |
-| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [Step 5: Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#step-5-deploy-the-confidential-gpu-vm) |
+| **Confidential LLM Inferencing (CPU + GPU Accelerated)** | [5. Deploy the Confidential GPU VM](../../tutorials/confidential-llm-inferencing/README.md#5-deploy-the-confidential-gpu-vm) |
+
 
