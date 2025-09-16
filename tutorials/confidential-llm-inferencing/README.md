@@ -759,7 +759,7 @@ source ~/.bashrc
 To verify that the CGPU is running in the intended state, you can use the tool [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/tree/283feee4d9135767e96e08126c306769d6591334/src/local_gpu_verifier) provided in the onboarding package. This tool checks the GPU's attestation status and ensures that it is operating in a secure and compliant manner.
 
 > [!NOTE]
-> If you want the verifier to set the GPU Ready State based on the Attestation results, you will need to elevate the user privileges to root before you execute th rest of the instruction like so:
+> If you want the verifier to set the GPU Ready State based on the Attestation results, you will need to elevate the user privileges to root before you execute the rest of the instruction like so:
 > ```bash
 > sudo -i
 > ```
