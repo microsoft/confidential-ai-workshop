@@ -1053,3 +1053,31 @@ az vm delete --resource-group $RESOURCE_GROUP --name $VM_NAME --yes
 az keyvault delete --name $KEY_VAULT_NAME --resource-group $RESOURCE_GROUP
 az attestation delete --name $ATTESTATION_PROVIDER --resource-group $RESOURCE_GROUP
 ```
+
+> [!IMPORTANT]
+> If you have set up a managed HSM as your Key Management Solution as described in the module [Provision a Managed HSM for Secure Key Release](../../modules/key-management/Managed-HSM.md), please note that deleting a managed HSM is a two-step process.
+> 
+> 1. First, you need to delete the managed HSM instance or resource. They then enter a "soft-delete" state for a retention period (the default retention period is 90 days) before they are permanently deleted. During this retention period, you can recover the managed HSM if needed but consider that you will still incur costs for the soft-deleted resources.
+>
+> 2. Then, to permanently delete the managed HSM or their keys before the retention period ends, you can purge the soft-deleted resources (only if you have not enabled the purge protection feature).
+>
+> #### Deleting and Purging a Managed HSM
+> Here are the commands to delete and purge a managed HSM:
+> ```powershell
+> az keyvault delete -g $RESOURCE_GROUP --hsm-name $HSM_NAME
+> ```
+> The managed HSM will be in a soft-deleted state after this command.
+> Now to permanently delete it, use:
+> ```powershell
+> az keyvault purge -g $RESOURCE_GROUP --hsm-name $HSM_NAME
+> ```
+> #### Deleting and Purging a Managed HSM Key
+> If you want to delete and purge a specific key within the managed HSM, you can do so with the following commands:
+> ```powershell
+> az keyvault key delete --hsm-name $HSM_NAME --name $KEY_NAME
+> ```
+> This command deletes the key and puts it in a soft-deleted state.
+> To permanently delete the key, use:
+> ```powershell
+> az keyvault key purge --hsm-name $HSM_NAME --name $KEY_NAME
+> ```
