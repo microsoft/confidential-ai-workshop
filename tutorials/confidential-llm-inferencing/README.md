@@ -758,7 +758,14 @@ source ~/.bashrc
 #### 8.4. Verify GPU Attestation
 To verify that the CGPU is running in the intended state, you can use the tool [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/tree/283feee4d9135767e96e08126c306769d6591334/src/local_gpu_verifier) provided in the onboarding package. This tool checks the GPU's attestation status and ensures that it is operating in a secure and compliant manner.
 
-First, navigate to the `local_gpu_verifier` directory and build the tool:
+> [!NOTE]
+> If you want the verifier to set the GPU Ready State based on the Attestation results, you will need to elevate the user privileges to root before you execute th rest of the instruction like so:
+> ```bash
+> sudo -i
+> ```
+> Otherwise, you can proceed with the next steps without requiring sudo privileges.
+
+Navigate to the `local_gpu_verifier` directory and build the tool:
 ```bash
 cd ~/az-cgpu-onboarding/src/local_gpu_verifier
 python3 -m venv ./gpuattestation-env
@@ -770,7 +777,7 @@ Then to run the verifier you can execute the following commands:
 ```bash
 cd ~/az-cgpu-onboarding/src/local_gpu_verifier
 source ./gpuattestation-env/bin/activate
-sudo python3 -m verifier.cc_admin
+python3 -m verifier.cc_admin
 ```
 
 You should obtain an output similar to this:
