@@ -1081,3 +1081,6 @@ az attestation delete --name $ATTESTATION_PROVIDER --resource-group $RESOURCE_GR
 > ```powershell
 > az keyvault key purge --hsm-name $HSM_NAME --name $KEY_NAME
 > ```
+> Again, this will permanently remove the key from the managed HSM.
+> Make sure to replace `$HSM_NAME` and `$KEY_NAME` with the actual names of your managed HSM and key.
+> For a more detailed explanation, please refer to the official documentation on [Managed HSM soft-delete and purge protection](https://learn.microsoft.com/en-us/azure/key-vault/managed-hsm/recovery?tabs=azure-cli).
