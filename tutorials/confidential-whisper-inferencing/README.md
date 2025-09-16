@@ -4,7 +4,7 @@
 
 ## Introduction: Why Confidential Audio Processing Matters
 
-In the tutorial [Confidential LLM Inference](../confidential-llm-inferencing/README.md), we've secured text-based LLM inference using Confidential VMs. But what about audio data? Consider these scenarios:
+In the tutorial [Confidential LLM Inferencing](../confidential-llm-inferencing/README.md), we've secured text-based LLM inference using Confidential VMs. But what about audio data? Consider these scenarios:
 
 - **Healthcare**: Patient consultations recorded for diagnosis assistance
 - **Legal**: Confidential depositions that need transcription and analysis
@@ -66,9 +66,8 @@ This creates a powerful security property: clients can encrypt data that only ve
 ### What You'll Need
 
 Building on our previous tutorial, you should already have:
-- ✅ A Confidential GPU VM running your LLM (from Tutorial 2)
+- ✅ A Confidential GPU VM running your LLM (for example by following the tutorial [Confidential LLM Inferencing](../confidential-llm-inferencing/README.md))
 - ✅ The VM exposed via HTTPS with Caddy and API authentication
-- ✅ A working Streamlit client for LLM interaction
 
 Additionally, you'll need:
 - 📝 Access to [Azure AI Foundry's Confidential Whisper preview](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/azure-ai-confidential-inferencing-preview/4248181)
@@ -100,9 +99,8 @@ The client will run on `http://localhost:8501` and won't require any firewall ch
 For a more isolated, shareable demo environment, let's create a small Azure VM:
 
 ```powershell
-# PowerShell - Define our client infrastructure
 $CLIENT_RESOURCE_GROUP = "confidential-whisper-client-rg"
-$LOCATION = "eastus2"  # Same region as your Confidential GPU VM
+$LOCATION = "eastus2"  # Same region as our Confidential GPU VM
 $CLIENT_VM_NAME = "whisper-client-vm"
 $CLIENT_VNET_NAME = "whisper-client-vnet"
 $CLIENT_SUBNET_NAME = "default"
@@ -143,7 +141,7 @@ $CLIENT_PUBLIC_IP = az vm show -d `
 Write-Host "Client VM created. SSH access: ssh $ADMIN_USERNAME@$CLIENT_PUBLIC_IP" -ForegroundColor Green
 ```
 
-Now, let's configure network security to allow Streamlit access (port 8501) only from your IP:
+Now, let's configure network security to allow Streamlit access (port 8501) only from our local IP:
 
 ```powershell
 # Get your current public IP
@@ -235,7 +233,7 @@ cmake --version
 
 ## Step 3: Building Microsoft's Attested OHTTP Client
 
-Now we'll build the Python bindings for the OHTTP client:
+Now we'll build the Python bindings for the OHTTP client from the github repository [microsoft/attested-ohttp-client](https://github.com/microsoft/attested-ohttp-client):
 
 ```bash
 # Clone Microsoft's attested OHTTP client repository
