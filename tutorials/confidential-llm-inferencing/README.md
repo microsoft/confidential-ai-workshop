@@ -194,16 +194,18 @@ az network vnet create `
 
 ### 4. Secure Key Vault and Attestation Policy Configuration
 
-As our goal is to set-up a confidential VM that is CPU+GPU based, we need to handle GPU-specific attestation requirements. This involves creating policies that validate both the CPU and GPU confidential states. Unlike standard confidential VMs, which only attest the CPU's trusted execution environment, confidential GPU VMs must also attest the NVIDIA GPU's confidential computing mode. This dual attestation ensures that both components meet strict security standards before any keys are released.
+To set up a CPU+GPU **Confidential VM**, we use a **double-attestation** pattern that cleanly separates what **Azure Key Vault Secure Key Release (SKR)** enforces from what we verify **in-guest**. As of now, MAA does not support verifying GPU attestation evidence or including GPU-specific claims in its tokens but it can be performed independently (see [Azure AI Confidential Inferencing: Technical Deep-Dive](https://techcommunity.microsoft.com/blog/azureconfidentialcomputingblog/azure-ai-confidential-inferencing-technical-deep-dive/4253150#:~:text=Applications%20within%20the%20VM%20can,when%20the%20GPU%20is%20reset)). Hence, SKR evaluates MAA evidence for the SEV-SNP CVM (CPU/vTPM), and we verify the GPU separately. This gives us strong end-to-end guarantees without requiring GPU claims in SKR policies.
 
-The Secure Key Release policy will be updated to recognize GPU attestation claims. This includes integrating NVIDIA's Device Attestation Root of Trust (DART) with AMD's SEV-SNP attestation. The policy will ensure that keys are only released to environments where:
+Concretely:
 
-1. The CPU is running in a verified SEV-SNP enclave.
-2. The GPU is operating in Confidential Computing (CC) mode with verified firmware.
-3. The kernel and bootloader signatures match expected values.
-4. Debugging interfaces are disabled on both the CPU and GPU.
+* **SKR policy** matches claims from the MAA token for a **SEV-SNP CVM** (e.g., `x-ms-isolation-tee.x-ms-attestation-type`, `x-ms-isolation-tee.x-ms-compliance-status`, and optional vTPM assertions). If these checks pass, Key Vault releases the wrapping key.
+* **In-guest GPU attestation** then confirms the **NVIDIA H100** is in the expected confidential mode with approved firmware before the app uses the released key or loads model weights.
 
-By implementing these policies, we ensure that the environment is secure and meets the necessary requirements for confidential AI workloads.
+> [!NOTE]
+> For GPU verification we use the *Local GPU Verifier* from the [Azure/az-cgpu-onboarding](https://github.com/Azure/az-cgpu-onboarding) repo (we will cover that in step [8.4. Verify GPU Attestation](https://github.com/microsoft/confidential-ai-workshop/blob/initial-tutorials/tutorials/confidential-llm-inferencing/README.md#84-verify-gpu-attestation) of this tutorial). You will be able to run it at startup and any time later to (re)check the GPU state.
+
+By combining **SKR (CPU/vTPM)** with **local GPU attestation**, keys are released only to a compliant CVM *and* are usable only when the GPU is also in a verified confidential state—exactly what we need for confidential AI workloads.
+
 
 #### 4.1 Create the Key Vault
 
