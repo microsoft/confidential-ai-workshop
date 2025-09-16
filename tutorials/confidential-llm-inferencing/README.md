@@ -210,7 +210,7 @@ By implementing these policies, we ensure that the environment is secure and mee
 Similar to the [Confidential ML Training](../confidential-ml-training/README.md) tutorial, we'll create a Azure Key Vault Premium setup.
 
 > [!TIP]
-> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](../../modules/key-management/Managed-HSM.md) *(coming soon)*.
+> For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](../../modules/key-management/Managed-HSM.md).
 
 Now create the resource group and Key Vault:
 ```powershell
