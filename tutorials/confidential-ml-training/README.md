@@ -626,13 +626,15 @@ Let's start by setting up our encryption workflow on your local machine. We'll c
 
 This script will connect to your Azure Key Vault, use the public part of your HSM-protected key to encrypt the `confidentialData.csv` file, and save the result as `confidentialData.enc` along with its corresponding wrapped DEK inside of `confidentialData.key`. Think of it as creating a digitally sealed envelope that only a genuine Confidential VM can open!
 
-The script is already created for you. Here's how it works:
+The script is already created for you in [src/encrypt_data.py](src/encrypt_data.py). Here's how it works:
 
 ```python
-import sys
 import os
+import sys
 import logging
+import argparse
 from pathlib import Path
+
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.keys.crypto import CryptographyClient, KeyWrapAlgorithm
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -640,13 +642,15 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # --- Logging Setup ---
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-CHUNK_SIZE = 8 * 1024 * 1024
+CHUNK_SIZE = 8 * 1024 * 1024  # 8 MB
 
-def encrypt_file(src_path, dek):
+
+def encrypt_file(src_path: Path, dek: bytes) -> Path:
+    """Encrypt a file with AES-256-GCM, storing [nonce][ciphertext][tag]."""
     nonce = os.urandom(12)
     encryptor = Cipher(algorithms.AES(dek), modes.GCM(nonce)).encryptor()
     enc_path = src_path.with_suffix(".enc")
@@ -654,62 +658,101 @@ def encrypt_file(src_path, dek):
         fout.write(nonce)
         while True:
             chunk = fin.read(CHUNK_SIZE)
-            if not chunk: break
+            if not chunk:
+                break
             fout.write(encryptor.update(chunk))
         fout.write(encryptor.finalize())
         fout.write(encryptor.tag)
     return enc_path
 
+
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments.
+    """
+    p = argparse.ArgumentParser(
+        description="Encrypt a file locally, then wrap the DEK with a KEK in AKV or Managed HSM."
+    )
+    p.add_argument("file", help="Path to the file to encrypt.")
+    
+    p.add_argument(
+        "--key-id",
+        help=(
+            "Full Key ID of the KEK in AKV or MHSM."
+            "Ex: https://mymhsm.managedhsm.azure.net/keys/KeyEncryptionKey/<version-or-guid>"
+        )
+    )
+    return p.parse_args()
+
+
 def main():
-    if len(sys.argv) != 4:
-        logging.error("Usage: python encrypt_data.py <FILE> <VAULT_NAME> <KEY_NAME>")
+    args = parse_args()
+
+    src_path = Path(args.file)
+    if not src_path.exists() or not src_path.is_file():
+        logging.error(f"Input file not found: {src_path}")
         sys.exit(1)
 
-    src_path = Path(sys.argv[1])
-    vault_name, key_name = sys.argv[2], sys.argv[3]
+    # Resolve Key ID (prefer --key-id if provided)
+    if args.key_id:
+        key_id = args.key_id.strip()
+        logging.info(f"Using provided Key ID: {key_id}")
+    else:
+        logging.error("Key ID must be provided via --key-id argument.")
+        sys.exit(1)
+
+    # Authenticate and construct CryptographyClient
+    credential = DefaultAzureCredential()
+    crypto_client = CryptographyClient(key_id, credential)
 
     logging.info(f"Starting encryption for: {src_path.name}")
-    
-    # Authenticate and get a crypto client for our KEK
-    kv_uri = f"https://{vault_name}.vault.azure.net"
-    credential = DefaultAzureCredential()
-    crypto_client = CryptographyClient(f"{kv_uri}/keys/{key_name}", credential)
 
-    # 1. Generate a random 32-byte Data Encryption Key (DEK)
+    # 1) Generate DEK (32 bytes for AES-256)
     dek = os.urandom(32)
 
-    # 2. Encrypt the local file with the DEK using AES-256-GCM
+    # 2) Encrypt the file locally with AES-256-GCM
     encrypted_file_path = encrypt_file(src_path, dek)
-    logging.info(f"Successfully encrypted data to '{encrypted_file_path.name}'")
+    logging.info(f"Successfully encrypted data -> '{encrypted_file_path.name}'")
 
-    # 3. Wrap the DEK with the KEK in Azure Key Vault
-    logging.info(f"Wrapping DEK with KEK '{key_name}' using rsa1_5 for compatibility...")
-    wrap_result = crypto_client.wrap_key(KeyWrapAlgorithm.rsa1_5, dek)
+    # 3) Wrap the DEK with the KEK (in AKV or MHSM)
+    logging.info(f"Wrapping DEK with KEK using RSA_OAEP_256 ...")
+    wrap_result = crypto_client.wrap_key(KeyWrapAlgorithm.rsa_oaep_256, dek)
     wrapped_dek = wrap_result.encrypted_key
-    
+
+    # 4) Persist wrapped DEK alongside the encrypted file
     key_file_path = src_path.with_suffix(".key")
     key_file_path.write_bytes(wrapped_dek)
-    logging.info(f"Saved wrapped DEK to '{key_file_path.name}'")
-    
-    del dek # Securely delete the DEK from memory
+    logging.info(f"Successfully saved wrapped DEK -> '{key_file_path.name}'")
+
+    # Attempt to reduce exposure of DEK in memory
+    del dek
     logging.info("Encryption process complete.")
+
 
 if __name__ == "__main__":
     main()
 ```
 
+Therefore, if you have the following directory structure:
+```
+.
+├── data
+│   └── confidentialData.csv
+└── encrypt_data.py
+```
+
 You can now use the script like this:
 
 ```powershell
-python encrypt_data.py "data/confidentialData.csv" $KEY_VAULT_NAME $KEK_NAME
+python encrypt_data.py "data/confidentialData.csv" --key-id $KEK_KID
 ```
 
 You should be able to see this output:
 ```output
 2025-01-XX XX:XX:XX - INFO - Starting encryption for: confidentialData.csv
-2025-01-XX XX:XX:XX - INFO - Successfully encrypted data to 'confidentialData.enc'
-2025-01-XX XX:XX:XX - INFO - Wrapping DEK with KEK 'KeyEncryptionKey' using rsa1_5 for compatibility...
-2025-01-XX XX:XX:XX - INFO - Saved wrapped DEK to 'confidentialData.key'
+2025-01-XX XX:XX:XX - INFO - Successfully encrypted data -> 'confidentialData.enc'
+2025-01-XX XX:XX:XX - INFO - Wrapping DEK with KEK using RSA_OAEP_256 ...
+2025-01-XX XX:XX:XX - INFO - Successfully saved wrapped DEK -> 'confidentialData.key'
 2025-01-XX XX:XX:XX - INFO - Encryption process complete.
 ```
 

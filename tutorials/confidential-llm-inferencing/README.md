@@ -458,11 +458,13 @@ pip install azure-identity==1.23.1 azure-keyvault-keys==4.11.0 pycryptodome==3.2
 Create a Python script named `encrypt_model.py` with the following content:
 
 ```python
-import sys
 import os
+import sys
 import logging
 import shutil
+import argparse
 from pathlib import Path
+
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.keys.crypto import CryptographyClient, KeyWrapAlgorithm
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -476,6 +478,7 @@ logging.basicConfig(
 
 # Using a larger chunk size can be more efficient for large model files.
 CHUNK_SIZE = 8 * 1024 * 1024  # 8 MB
+
 
 def encrypt_file(src_path: Path, dest_path: Path, dek: bytes):
     """
@@ -509,31 +512,52 @@ def encrypt_file(src_path: Path, dest_path: Path, dek: bytes):
         # Append the 16-byte tag to the end of the file for integrity checks.
         fout.write(encryptor.tag)
 
+
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command-line arguments.
+    """
+    p = argparse.ArgumentParser(
+        description="Archive a model dir, encrypt it locally, then wrap the DEK with a KEK in AKV or Managed HSM."
+    )
+    p.add_argument(
+        "model_directory",
+        help="Path to the local model directory to be archived and encrypted."
+    )
+    p.add_argument(
+        "--key-id",
+        help=("Full Key ID of the KEK in AKV or MHSM."
+              "Ex: https://mymhsm.managedhsm.azure.net/keys/KeyEncryptionKey/<version>"),
+    )
+    p.add_argument(
+        "--output-dir",
+        default="encrypted-model-package",
+        help="Directory to store the encrypted model package."
+    )
+    return p.parse_args()
+
+
 def main():
-    """
-    Main execution function. Parses arguments and orchestrates the
-    archiving, encryption, and key wrapping process.
-    """
-    if len(sys.argv) != 4:
-        logging.error("Usage: python encrypt_model.py <MODEL_DIRECTORY> <VAULT_NAME> <KEY_NAME>")
+    # Parse command-line arguments
+    args = parse_args()
+
+    # Validate input model directory
+    model_dir = Path(args.model_directory)
+    if not model_dir.is_dir():
+        logging.error(f"Local model directory not found: {model_dir}")
         sys.exit(1)
 
-    model_dir = Path(sys.argv[1])
-    vault_name, key_name = sys.argv[2], sys.argv[3]
-    output_dir = Path("encrypted-model-package")
-    
-    if not model_dir.is_dir():
-        raise FileNotFoundError(f"Local model directory not found: {model_dir}")
+    # Prepare output directory
+    output_dir = Path(args.output_dir)
     if output_dir.exists():
         logging.warning(f"Output directory '{output_dir}' already exists. Deleting it.")
         shutil.rmtree(output_dir)
     output_dir.mkdir()
 
-    # 1. Create a TAR archive of the model directory.
-    archive_base_name = Path("model_archive")
-    logging.info(f"Creating TAR archive of '{model_dir}'...")
+    # 1) Create a TAR archive of the model directory.
+    logging.info(f"Creating TAR archive of '{model_dir}' ...")
     archive_path_str = shutil.make_archive(
-        base_name=archive_base_name,
+        base_name=Path("model_archive"),
         format='tar',
         root_dir=model_dir.parent,
         base_dir=model_dir.name
@@ -541,38 +565,41 @@ def main():
     archive_path = Path(archive_path_str)
     logging.info(f"Archive created at '{archive_path}'.")
 
-    # 2. Generate a single, cryptographically secure 256-bit DEK.
-    dek = os.urandom(32)  # 32 bytes = 256 bits
+    # 2) Generate a single 256-bit DEK.
+    dek = os.urandom(32)
     logging.info("Generated a 256-bit Data Encryption Key (DEK).")
 
-    # 3. Encrypt the entire TAR archive using the DEK.
+    # 3) Encrypt the TAR with the DEK (AES-256-GCM).
     encrypted_archive_path = output_dir / (archive_path.name + ".enc")
-    logging.info(f"Encrypting archive '{archive_path}' to '{encrypted_archive_path}'...")
+    logging.info(f"Encrypting archive -> '{encrypted_archive_path}' ...")
     encrypt_file(archive_path, encrypted_archive_path, dek)
     logging.info("Encryption complete.")
+    archive_path.unlink()  # remove unencrypted TAR
 
-    # Clean up the temporary unencrypted archive
-    archive_path.unlink()
+    # 4) Wrap the DEK with the KEK in AKV or MHSM.
+    if args.key_id:
+        key_id = args.key_id.strip()
+        logging.info(f"Using provided Key ID: {key_id}")
+    else:
+        logging.error("Key ID must be provided via --key-id argument.")
+        sys.exit(1)
 
-    # 4. Wrap the DEK with the Key Encryption Key (KEK) from Azure Key Vault.
-    kv_uri = f"https://{vault_name}.vault.azure.net"
     credential = DefaultAzureCredential()
-    crypto_client = CryptographyClient(f"{kv_uri}/keys/{key_name}", credential)
-    
-    logging.info(f"Wrapping the DEK with KEK '{key_name}' from Key Vault '{vault_name}'...")
-    
-    wrap_result = crypto_client.wrap_key(KeyWrapAlgorithm.rsa1_5, dek)
+    crypto_client = CryptographyClient(key_id, credential)
+
+    logging.info(f"Wrapping DEK with RSA_OAEP_256...")
+    wrap_result = crypto_client.wrap_key(KeyWrapAlgorithm.rsa_oaep_256, dek)
     wrapped_dek = wrap_result.encrypted_key
-    
-    # Save the wrapped DEK to a file. This file is not sensitive.
+
     wrapped_key_path = output_dir / "wrapped_model_dek.bin"
     wrapped_key_path.write_bytes(wrapped_dek)
     logging.info(f"Wrapped DEK saved to '{wrapped_key_path}'.")
-    
-    # 5. Securely clear the plaintext DEK from this script's memory.
+
+    # 5) Clear plaintext DEK from memory (best effort).
     del dek
 
-    logging.info(f"\n--- Success! --- \nThe model package '{output_dir}' is now ready for secure upload.")
+    logging.info(f"\n--- Success ---\nThe directory {output_dir} is ready for secure upload.")
+
 
 if __name__ == "__main__":
     main()
@@ -728,10 +755,75 @@ echo 'export PATH=/usr/local/cuda-12.5/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### 8.4. Install the Secure Key Release Azure application
+#### 8.4. Verify GPU Attestation
+To verify that the CGPU is running in the intended state, you can use the tool [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/tree/283feee4d9135767e96e08126c306769d6591334/src/local_gpu_verifier) provided in the onboarding package. This tool checks the GPU's attestation status and ensures that it is operating in a secure and compliant manner.
+
+First, navigate to the `local_gpu_verifier` directory and build the tool:
+```bash
+cd ~/az-cgpu-onboarding/src/local_gpu_verifier
+python3 -m venv ./gpuattestation-env
+source ./gpuattestation-env/bin/activate
+pip install .
+```
+
+Then to run the verifier you can execute the following commands:
+```bash
+cd ~/az-cgpu-onboarding/src/local_gpu_verifier
+source ./gpuattestation-env/bin/activate
+sudo python3 -m verifier.cc_admin
+```
+
+You should obtain an output similar to this:
+```
+Generating random nonce in the local GPU Verifier ..
+Number of GPUs available : 1
+Fetching GPU 0 information from GPU driver.
+All GPU Evidences fetched successfully
+-----------------------------------
+Verifying GPU: GPU-885e135a-0f3f-b153-b66f-93305e9ab546
+        Driver version fetched : 570.158.01
+        VBIOS version fetched : 96.00.9f.00.04
+        Validating GPU certificate chains.
+                The firmware ID in the device certificate chain is matching with the one in the attestation report.
+                GPU attestation report certificate chain validation successful.
+                        The certificate chain revocation status verification successful.
+        Authenticating attestation report
+                The nonce in the SPDM GET MEASUREMENT request message is matching with the generated nonce.
+                Driver version fetched from the attestation report : 570.158.01
+                VBIOS version fetched from the attestation report : 96.00.9f.00.04
+                Attestation report signature verification successful.
+                Attestation report verification successful.
+        Authenticating the RIMs.
+                Authenticating Driver RIM
+                        Fetching the driver RIM from the RIM service.
+                        RIM Schema validation passed.
+                        driver RIM certificate chain verification successful.
+                        The certificate chain revocation status verification successful.
+                        driver RIM signature verification successful.
+                        Driver RIM verification successful
+                Authenticating VBIOS RIM.
+                        Fetching the VBIOS RIM from the RIM service.
+                        RIM Schema validation passed.
+                        vbios RIM certificate chain verification successful.
+                        The certificate chain revocation status verification successful.
+                        vbios RIM signature verification successful.
+                        VBIOS RIM verification successful
+        Comparing measurements (runtime vs golden)
+                        The runtime measurements are matching with the golden measurements.
+                GPU is in expected state.
+        GPU 0 with UUID GPU-885e135a-0f3f-b153-b66f-93305e9ab546 verified successfully.
+        GPU Ready State is already READY
+GPU Attestation is Successful.
+```
+
+Here we can see that the GPU attestation is successful and that the GPU is in the expected state.
+
+
+
+#### 8.5. Install the Secure Key Release Azure application
 To get an asymetric encryption key stored in Azure Keyvault or managed HSM released to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
 
-##### 8.4.1. Update and Install build tools and librairies
+##### 8.5.1. Update and Install build tools and librairies
 
 ```bash
 sudo apt-get install -y \
@@ -739,15 +831,15 @@ sudo apt-get install -y \
   libjsoncpp-dev libboost-all-dev nlohmann-json3-dev
 ```
 
-##### 8.4.2. Install the Azure Guest Attestation Library
+##### 8.5.2. Install the Azure Guest Attestation Library
 The latest attestation package can be found here [https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/](https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/)
 ```bash
-wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.0.5_amd64.deb
-sudo dpkg -i azguestattestation1_1.0.5_amd64.deb
-rm azguestattestation1_1.0.5_amd64.deb
+wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.1.2_amd64.deb
+sudo dpkg -i azguestattestation1_1.1.2_amd64.deb
+rm azguestattestation1_1.1.2_amd64.deb
 ```
 
-##### 8.4.3. Build the Secure Key Release Application
+##### 8.5.3. Build the Secure Key Release Application
 Clone the repository:
 ```bash
 git clone https://github.com/Azure/confidential-computing-cvm-guest-attestation.git
