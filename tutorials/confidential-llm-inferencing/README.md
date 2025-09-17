@@ -127,7 +127,7 @@ CurrentValue    Limit    LocalName
 If your quota shows 0 (Limit is 0) for `StandardNCCads2023Family` cores, you'll need to request a quota increase.
 
 > [!IMPORTANT]
-> If you don't see the `Standard NCCads2023 Family vCPUs` SKU listed, or your quota is 0, you must request a quota increase through the Azure portal. This process can take few business days. Navigate to **Subscriptions → Usage + quotas → Request increase** and request at least **40** cores for the "Standard NCCads H100 Family" in your chosen region.
+> If you don't see the `Standard NCCads2023 Family vCPUs` SKU listed, or your quota is 0, you must request a quota increase through the Azure portal. This process can take few business days. Navigate to **Subscriptions → Usage + quotas → Request increase** and request at least **40** cores for the "Standard NCCads H100 Family" in your chosen region. Check [Azure CGPU Quota Request](https://github.com/Azure/az-cgpu-onboarding/blob/main/docs/CGPU-Quota.md) for detailed steps.
 
 #### 1.2 Azure CLI Version and Environment Setup
 
