@@ -29,7 +29,7 @@ $LOCATION
 ### 1) Create the Key Vault (Premium) with RBAC and purge protection
 
 First, we need to give to our AKV a name:
-```powerhsell
+```powershell
 $KEY_VAULT_NAME = "MyConfKV-$(Get-Random)"
 ```
 
