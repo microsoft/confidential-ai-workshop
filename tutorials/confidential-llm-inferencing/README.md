@@ -620,7 +620,7 @@ if __name__ == "__main__":
 Run the script by passing the model local directory, the Key Vault Name and the Key Encryption Key name as arguments:
 
 ```powershell
-python encrypt_model.py $MODEL_DIR $KV_NAME $KEK_NAME
+python encrypt_model.py $MODEL_DIR --key-id $KEK_KID
 ```
 
 After the script finishes, you will have a new directory named `encrypted-model-package`. This folder contains the encrypted model archive (`model_archive.tar.enc`) and the wrapped key. It is now safe to transfer this entire folder to your VM.
