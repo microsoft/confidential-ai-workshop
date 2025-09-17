@@ -20,7 +20,7 @@ Use this module to set up OS disk encryption for Confidential VMs with your own 
 > [!TIP]
 > If you haven’t created/activated your Managed HSM yet, run the module [Provision a Managed HSM for SKR](../key-management/Managed-HSM.md) and export `$HSM_NAME` / `$HSM_RESOURCE_ID` first.
 
-
+## Procedure
 
 ### 1. Register the Confidential VM Orchestrator Service Principal
 

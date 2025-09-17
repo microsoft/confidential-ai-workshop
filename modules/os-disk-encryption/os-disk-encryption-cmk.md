@@ -20,6 +20,8 @@ Use this module to set up OS disk encryption for Confidential VMs with your own 
 > [!TIP]
 > If you haven’t created your Azure Key Vault (Premium) yet, run the module [Provision Azure Key Vault (Premium)](../key-management/Azure-Key-Vault-Premium.md) and export `$KEY_VAULT_NAME` / `$VAULT_ID` first.
 
+## Procedure
+
 ### 1. Register the Confidential VM Orchestrator Service Principal
 
 To enable advanced capabilities like OS disk encryption with your own keys, you must register the "Confidential VM Orchestrator" service principal in your Azure tenant. This is a one-time setup task.
