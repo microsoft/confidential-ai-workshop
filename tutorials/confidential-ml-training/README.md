@@ -27,7 +27,7 @@
 
 - DEK, KEK and Master Key Management:
   - [Azure Data Encryption at Rest](https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-atrest)
-  - [Unbderstanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
+  - [Un derstanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
 
 - Confidential VM:
   - [About Azure confidential VMs](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-vm-overview)

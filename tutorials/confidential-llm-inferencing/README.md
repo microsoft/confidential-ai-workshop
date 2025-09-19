@@ -34,7 +34,7 @@ We will achieve this by leveraging the following concepts:
 
 - DEK, KEK and Master Key Management:
   - [Azure Data Encryption at Rest](https://learn.microsoft.com/en-us/azure/security/fundamentals/encryption-atrest)
-  - [Unbderstanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
+  - [Understanding DEK and KEK in Encryption](https://zerotohero.dev/inbox/dek-kek/)
 
 - Confidential VM:
   - [About Azure confidential VMs](https://learn.microsoft.com/en-us/azure/confidential-computing/confidential-vm-overview)
@@ -152,7 +152,7 @@ The main differences you'll notice compared to Tutorial 1:
 - Attestation verification encompasses both hardware components
 
 **Checkpoint**: Before proceeding to Step 2, ensure you have:
-- [x] Azure CLI 2.38.0+ installed and configured
+- [x] Azure CLI 2.46.0+ installed and configured
 - [x] Quota approved for `Standard_NCC40ads_H100_v5` (40 cores minimum)
 
 
@@ -266,7 +266,7 @@ The Secure Key Release (SKR) policy is a JSON document that defines the conditio
   "version": "1.0.0",
   "anyOf": [
     {
-      "authority": "sharedeus2.eus2.attest.azure.net",
+      "authority": "https://sharedeus2.eus2.attest.azure.net",
       "allOf": [
         {
           "claim": "x-ms-isolation-tee.x-ms-attestation-type",
@@ -303,7 +303,6 @@ Now we will create the key that will be used to wrap the model encryption key wi
 
 Let's define a variable for our key name:
 ```powershell
-
 $KEK_NAME="KeyEncryptionKey"
 ```
 
@@ -827,8 +826,6 @@ GPU Attestation is Successful.
 
 Here we can see that the GPU attestation is successful and that the GPU is in the expected state.
 
-
-
 #### 8.5. Install the Secure Key Release Azure application
 To get an asymetric encryption key stored in Azure Keyvault or managed HSM released to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
 
@@ -963,7 +960,58 @@ pip install torch mamba-ssm causal-conv1d transformers accelerate "uvicorn[stand
 pip install flash-attn --no-build-isolation
 ```
 
-Once we have all of the required packages installed, we can create our FastAPI application. First, we create a small module that handles the secure key release and model decryption based on the `AzureAttestSKR` application (we use `nano` but you can use your favorite text editor):
+In order to be able to attest the GPU as part of the secure key release process of our vllm inference application, we also need to install the gpu_attestation package inside of our virtual environment:
+
+```bash
+cd ~/az-cgpu-onboarding/src/local_gpu_verifier
+pip install .
+cd ~/
+```
+Finally, we install `vLLM` which is the library that will allow us to run our LLM inference server:
+
+```bash
+pip install vllm
+```
+
+Once we have all of the required packages installed, we can create our FastAPI application. Firstly, we build a small module that will be responsible for handling the GPU attestation  (we use `nano` but you can use your favorite text editor):
+
+```bash
+nano gpu_attestation.py
+```
+
+Then you paste the following python code:
+
+```python
+import jwt
+from verifier.cc_admin import get_user_nonce, collect_gpu_evidence_local, attest
+
+def is_gpu_attested(*, strict: bool = True, test_no_gpu: bool = False) -> dict:
+    """
+    Checks if the GPU is attested and in the expected state.
+    """
+    args = {
+        "verbose": False,
+        "test_no_gpu": test_no_gpu,
+        "driver_rim": None, "vbios_rim": None, "user_mode": False,
+        "allow_hold_cert": False, "nonce": None,
+        "rim_root_cert": None, "rim_service_url": None,
+        "ocsp_url": None, "ocsp_nonce_enabled": False,
+        "ocsp_validity_extension": None,
+        "ocsp_cert_revocation_extension_device": None,
+        "ocsp_cert_revocation_extension_driver_rim": None,
+        "ocsp_cert_revocation_extension_vbios_rim": None,
+        "ocsp_attestation_settings": "strict" if strict else "default",
+    }
+    nonce = get_user_nonce(args)
+    evidence = collect_gpu_evidence_local(nonce, args["test_no_gpu"])
+    ok, eat = attest(args, nonce, evidence)
+    return ok
+```
+
+> [!NOTE]
+> This module is built by leveraging the code from [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/blob/main/src/local_gpu_verifier) and exposes a simple function `is_gpu_attested()` that performs the GPU attestation and returns `True` if the attestation is successful, `False` otherwise.
+
+Secondly, we create a small module that handles the secure key release and model decryption based on the `AzureAttestSKR` application:
 
 ```bash
 nano skr_decrypt.py
@@ -978,6 +1026,7 @@ import tarfile
 import subprocess
 from pathlib import Path
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from gpu_attestation import is_gpu_attested
 
 NONCE_LEN = 12 # GCM nonce (96 bits)
 TAG_LEN = 16 # GCM tag (128 bits)
@@ -988,6 +1037,11 @@ def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     Uses AzureAttestSKR to attest, authorize SKR against AKV, and unwrap the model DEK.
     Returns the raw 32-byte DEK.
     """
+
+    # Ensure the GPU is attested before proceeding
+    if not is_gpu_attested(strict=True):
+        raise RuntimeError("GPU attestation failed. Cannot unwrap DEK.")
+
     p = Path(wrapped_key_path)
     if not p.is_file():
         raise FileNotFoundError(f"Wrapped DEK not found: {p}")
