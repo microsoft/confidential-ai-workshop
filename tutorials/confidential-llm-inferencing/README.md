@@ -616,7 +616,7 @@ if __name__ == "__main__":
 > 5.  **Unwrapping (on the CVM)**: The confidential VM, after proving its identity via attestation, is the only entity authorized by the KEK's release policy to unwrap the DEK. It can then use the plaintext DEK to decrypt the archive in its protected memory.
 
 #### 6.3. Run the Model Preparation Script
-Run the script by passing the model local directory, the Key Vault Name and the Key Encryption Key name as arguments:
+Run the script by passing the model local directory and KEK_KID as arguments:
 
 ```powershell
 python encrypt_model.py $MODEL_DIR --key-id $KEK_KID
