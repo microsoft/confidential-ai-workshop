@@ -55,7 +55,15 @@
 
 </details>
 
-## Step-by-Step: Deploying a Confidential VM via Azure CLI
+## Step-by-Step: Deploying a Confidential VM via Azure CLI for Confidential ML Training
+
+In a conventional cloud machine learning workflow, a data scientist typically uploads a dataset to a virtual machine and executes a training script. 
+
+![Standard ML Workflow](../../assets/confidential_ml_training/cassifical_cloud_ml_training.png)
+
+While standard security practices protect this data at-rest (on disk) and in-transit (over the network with TLS), a fundamental security gap remains: data protection in-use. The moment the training script loads the dataset, it resides in the VM's RAM in plaintext, making it theoretically visible to the underlying cloud infrastructure, such as the hypervisor or a privileged administrator. 
+
+This tutorial directly addresses that challenge by demonstrating the confidential computing paradigm. We will build an environment where our sensitive dataset remains encrypted end-to-end, even while in memory, using an Azure Confidential VM.
 
 We will use the Azure CLI to set up our confidential VM environment. This approach makes the tutorial easily reproducible for anyone with an Azure subscription and the appropriate permissions.
 
@@ -566,6 +574,8 @@ For this tutorial, we'll be working with a sample diabetes prediction dataset (s
 
 The beauty of this setup is that we'll implement **end-to-end encryption**: your sensitive data never exists in plain text outside of a Trusted Execution Environment (TEE). This means that even Azure itself cannot peek at your data during processing.
 
+![Confidential Data Encryption for SKR](../../assets/confidential_ml_training/confidential_data_encryption_skr.png)
+
 To make this happen, we'll use a powerful security pattern that separates the key used for the data from the key that protects it. Here's how it works:
 
 First, we'll locally generate a strong symmetric key called a **Data Encryption Key (DEK)**. This is a fast, single-use key whose only job is to encrypt our large CSV file.
@@ -762,7 +772,9 @@ Perfect! You should now have 2 new file, `confidentialData.enc` and `confidentia
 
 Now, let's take a look at the star of our show - the Python script that will run *inside* of the Confidential VM! This script, `train_xgb.py`, is where the magic happens. It's essentially a secure version of our original machine learning workflow, enhanced with confidential computing capabilities.
 
-Here's what this clever script does:
+![Confidential ML Training Workflow](../../assets/confidential_ml_training/confidential_ml_training_skr.png)
+
+Here's what this script does:
 1.  **Authenticates to Azure Key Vault** using the CVM's **Managed Identity** (no passwords or secrets needed!)
 2.  **Unwraps the Symmetric Key**: Reads our encrypted package, sends the "wrapped" symmetric key to Key Vault for attestation, and receives back the decrypted key if everything checks out
 3.  **Processes the data securely**: Decrypts the diabetes dataset in memory and trains an XGBoost model to predict diabetes outcomes
@@ -1035,6 +1047,9 @@ weighted avg       0.74      0.72      0.73       154
 ```
 
 **Success!** You have just run a machine learning workload on encrypted data inside a Confidential VM. The data was only ever in plaintext within the hardware-protected memory of the CVM, demonstrating a true end-to-end confidential workflow.
+
+Here is a diagram summarizing the entire process that we built in this tutorial:
+![Confidential ML Training Summary](../../assets/confidential_ml_training/confidential_ml_training_architecture.png)
 
 ### 9. Cleanup
 
