@@ -16,6 +16,18 @@ Organizations can use powerful AI models on confidential data (like analyzing me
 In essence, Confidential GPUs enable "Confidential AI" – AI that's privacy-preserving and secure end-to-end. Many of the reasons to use confidential computing in the first place apply strongly here.
 
 ## Scenario & Key Concepts
+To understand the benefits of Confidential AI, let's first look at a standard architecture for GPU-powered LLM inference, as illustrated in the figure below.
+
+![Standard LLM Inference Architecture](../../assets/confidential_llm_inferencing/classical_llm_inferencing_architecture.png)
+
+In this classical model, we rely on operational trust. The cloud provider has access to the host machine, and an administrator with sufficient privileges could potentially inspect the VM's memory. This exposes two key assets:
+
+ - The AI Model: The model's weights are loaded in plaintext into the GPU's memory (vRAM) and the system's memory (RAM). This makes the valuable IP of the model vulnerable to theft or inspection.
+
+ - User Data: The user's prompts and the model's responses are processed in plaintext by the inference server. This data is also exposed in memory during use.
+
+While TLS protects data in-transit, it offers no protection for data in-use. The goal of our confidential architecture is to close this gap.
+
 We'll outline a scenario where we deploy a language model inference service on a confidential GPU VM. In this scenario, we will consider a model that has been fully trained and instructed to be used as a chat bot such as [Phi-4-mini-reasoning]([https://github](https://github.com/marketplace/models/azureml/Phi-4-mini-reasoning)) (we suppose that this model is proprietary and the user queries might contain private data). We want to ensure:
 1. The model weights are not exposed to Azure or any outside party.
 2. The user's prompts and the model's responses are not visible to anyone except the user (and the TEE doing the processing).
@@ -425,7 +437,12 @@ $VM_PUBLIC_IP = $(az vm show -d --resource-group $RESOURCE_GROUP --name $VM_NAME
 ```
 
 ### 6. Model Preparation
-Now that we have our key vault and wrapping key set up, we can prepare our proprietary model for deployment. In this tutorial, we will use the [Phi-4-mini-reasoning](https://huggingface.co/microsoft/Phi-4-mini-reasoning) model as an example. This model is a smaller version of the Phi-4 series and is suitable for demonstration purposes.
+Now that we have our key vault and wrapping key set up, we can prepare our proprietary model for deployment. To protect it, we can't simply upload it to the VM. We must first encrypt it locally to ensure that the model is never exposed in plaintext outside of a trusted execution environment. The following diagram illustrates this crucial preparation step:
+
+![Model Preparation Workflow](../../assets/confidential_llm_inferencing/confidential_model_encrypt.png)
+
+
+In this tutorial, we will use the [Phi-4-mini-reasoning](https://huggingface.co/microsoft/Phi-4-mini-reasoning) model as an example. This model is a smaller version of the Phi-4 series and is suitable for demonstration purposes.
 
 To securely store the model, we will first need to have the model files locally, then generate a key to encrypt it and then use our Key Encryption Key (KEK) to "wrap" our local key. This will ensure that the model is securely stored and can only be accessed by our confidential GPU VM.
 
@@ -941,7 +958,9 @@ The released key is of type RSA. It can be used for wrapKey/unwrapKey operations
 > After troubleshooting, ensure that you set back `SKR_TRACE_ON=""`.
 
 ### 9. The Confidential LLM Inference Application
-On the VM, we will now set up the Python environment and the server application. The server's only job is to perform the secure key release, decrypt the model archive on its disk, extract it into protected memory, load the model, and serve inference requests.
+On the VM, we will now set up the Python environment and the server application. The server's only job is to perform the secure key release, decrypt the model archive, extract it into protected memory, load the model, and serve inference requests. At this stage, we will have everything we need to run our confidential LLM inference server on localhost.
+
+![Confidential SKR and Inference Workflow](../../assets/confidential_llm_inferencing/confidential_skr.png)
 
 #### 9.1. Install Python and Required Packages
 
@@ -1326,6 +1345,8 @@ Before diving into implementation, let's understand what we're building and why 
 Internet → Azure NSG (80/443 only) → Caddy (TLS termination) → vLLM (127.0.0.1:8000)
 ```
 
+![Secure Architecture Diagram](../../assets/confidential_llm_inferencing/confidential_llm_inference_architecture.png)
+
 This architecture ensures that even if an attacker compromises the network layer, they cannot directly access the model service. All external traffic must pass through our security layers.
 
 #### 11.1 Setting Up Public DNS for Your VM
@@ -1644,6 +1665,9 @@ The client will open in your browser at `http://localhost:8501`. Enter:
 - **API Key**: The key generated in [Step 11](#11-exposing-the-confidential-llm-service-with-tls)
 - **Model**: `/dev/shm/decrypted_model/Phi-4-mini-reasoning`
 
+With all of these steps completed, you should now have a fully functional confidential AI inference service with a secure client application! Here is the full architecture we have built:
+
+![Confidential AI Inference Architecture](../../assets/confidential_llm_inferencing/confidential_llm_encrypt_and_inference_architecture.png)
 
 ### 13. Cleanup
 To avoid incurring further costs for these powerful resources, you should delete the entire resource group when you are finished. This will permanently delete the VM, Key Vault, and all other associated resources.
