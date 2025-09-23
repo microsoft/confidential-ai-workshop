@@ -214,7 +214,7 @@ Concretely:
 * **In-guest GPU attestation** then confirms the **NVIDIA H100** is in the expected confidential mode with approved firmware before the app uses the released key or loads model weights.
 
 > [!NOTE]
-> For GPU verification we use the *Local GPU Verifier* from the [Azure/az-cgpu-onboarding](https://github.com/Azure/az-cgpu-onboarding) repo (we will cover that in step [8.4. Verify GPU Attestation](https://github.com/microsoft/confidential-ai-workshop/blob/initial-tutorials/tutorials/confidential-llm-inferencing/README.md#84-verify-gpu-attestation) of this tutorial). You will be able to run it at startup and any time later to (re)check the GPU state.
+> For GPU verification we use the *Local GPU Verifier* from the [Azure/az-cgpu-onboarding](https://github.com/Azure/az-cgpu-onboarding) repo (we will cover that in step [8.5. Verify GPU Attestation](#85-verify-gpu-attestation) of this tutorial). You will be able to run it at startup and any time later to (re)check the GPU state.
 
 By combining **SKR (CPU/vTPM)** with **local GPU attestation**, keys are released only to a compliant CVM *and* are usable only when the GPU is also in a verified confidential state—exactly what we need for confidential AI workloads.
 
