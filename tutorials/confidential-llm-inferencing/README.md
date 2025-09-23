@@ -466,7 +466,7 @@ To make all of this process, we will create a python script that will handle the
 
 
 #### 6.1. Install Local Python Dependencies
-Install the necessary Python packages for encryption and Azure Key Vault interaction:
+First ensure that you have a working Python environment (you can check this by running `python --version` in your terminal). Then install the necessary Python packages for encryption and Azure Key Vault interaction:
 
 ```powershell
 pip install azure-identity==1.23.1 azure-keyvault-keys==4.11.0 pycryptodome==3.23.0
@@ -773,7 +773,31 @@ echo 'export PATH=/usr/local/cuda-12.5/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### 8.4. Verify GPU Attestation
+#### 8.4. Create a Python Virtual Environment
+To manage our Python dependencies, we will create a pythonvirtual environment. This will allow us to install the necessary packages without affecting the system-wide Python installation.
+
+```bash
+cd ~/
+sudo apt-get update && sudo apt-get install -y python3-venv
+python3 -m venv ccvm-env
+source ccvm-env/bin/activate
+```
+
+You should see the prompt change to indicate that you are now working within the `ccvm-env` virtual environment.
+
+> [!NOTE]
+> Every time you log in to the VM, you will need to activate the virtual environment by running the command:
+> ```bash
+> cd ~/
+> source ccvm-env/bin/activate
+> ```
+> You can deactivate the virtual environment at any time by running the command:
+> ```bash
+> deactivate
+> ```
+> This will return you to the system-wide Python environment.
+
+#### 8.5. Verify GPU Attestation
 To verify that the CGPU is running in the intended state, you can use the tool [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/tree/283feee4d9135767e96e08126c306769d6591334/src/local_gpu_verifier) provided in the onboarding package. This tool checks the GPU's attestation status and ensures that it is operating in a secure and compliant manner.
 
 > [!NOTE]
@@ -783,18 +807,17 @@ To verify that the CGPU is running in the intended state, you can use the tool [
 > ```
 > Otherwise, you can proceed with the next steps without requiring sudo privileges.
 
-Navigate to the `local_gpu_verifier` directory and build the tool:
+Ensure that you have activated the `ccvm-env` virtual environment, then navigate to the `local_gpu_verifier` directory and build the tool:
 ```bash
+cd ~/
+source ccvm-env/bin/activate
 cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-python3 -m venv ./gpuattestation-env
-source ./gpuattestation-env/bin/activate
 pip install .
 ```
 
 Then to run the verifier you can execute the following commands:
 ```bash
-cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-source ./gpuattestation-env/bin/activate
+cd ~/
 python3 -m verifier.cc_admin
 ```
 
@@ -843,18 +866,19 @@ GPU Attestation is Successful.
 
 Here we can see that the GPU attestation is successful and that the GPU is in the expected state.
 
-#### 8.5. Install the Secure Key Release Azure application
-To get an asymetric encryption key stored in Azure Keyvault or managed HSM released to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
+#### 8.6. Install the Secure Key Release Azure application
+To be able to release the asymetric key encryption key stored in our Azure Keyvault or managed HSM to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
 
-##### 8.5.1. Update and Install build tools and librairies
+##### 8.6.1. Update and Install build tools and librairies
 
 ```bash
+cd ~/
 sudo apt-get install -y \
   build-essential cmake git libssl-dev libcurl4-openssl-dev \
   libjsoncpp-dev libboost-all-dev nlohmann-json3-dev
 ```
 
-##### 8.5.2. Install the Azure Guest Attestation Library
+##### 8.6.2. Install the Azure Guest Attestation Library
 The latest attestation package can be found here [https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/](https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/)
 ```bash
 wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.1.2_amd64.deb
@@ -862,7 +886,7 @@ sudo dpkg -i azguestattestation1_1.1.2_amd64.deb
 rm azguestattestation1_1.1.2_amd64.deb
 ```
 
-##### 8.5.3. Build the Secure Key Release Application
+##### 8.6.3. Build the Secure Key Release Application
 Clone the repository:
 ```bash
 git clone https://github.com/Azure/confidential-computing-cvm-guest-attestation.git
@@ -874,7 +898,7 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j"$(nproc)"
 cp AzureAttestSKR ~/
-cd ~
+cd ~/
 ```
 
 You can verify that the application was built successfully and that your environment is ready to perform SKR by running the following:
@@ -964,35 +988,20 @@ On the VM, we will now set up the Python environment and the server application.
 
 #### 9.1. Install Python and Required Packages
 
-First, we need to set up a Python virtual environment:
-```bash
-cd ~/
-sudo apt-get update && sudo apt-get install -y python3-venv
-python3 -m venv ccvm-env
-source ccvm-env/bin/activate
-```
-
-Then, we install Python and the required packages for our FastAPI application and for running our vLLM (in our case `Phi-4-mini-reasoning`). We will use `pip` to install the necessary libraries.
+For our entire application, we will use the python environment that we built earlier in the step [8.4. Create a Python Virtual Environment](#84-create-a-python-virtual-environment). We install the required packages for our vLLM server (`Phi-4-mini-reasoning` in the case of this tutorial). We will use `pip` to install the necessary libraries.
 
 ```bash
 pip install torch mamba-ssm causal-conv1d transformers accelerate "uvicorn[standard]" fastapi "pydantic" cryptography python-dotenv
 pip install flash-attn --no-build-isolation
 ```
 
-In order to be able to attest the GPU as part of the secure key release process of our vllm inference application, we also need to install the gpu_attestation package inside of our virtual environment:
-
-```bash
-cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-pip install .
-cd ~/
-```
-Finally, we install `vLLM` which is the library that will allow us to run our LLM inference server:
+Then, we install `vllm` which is the library that will allow us to run our LLM inference server:
 
 ```bash
 pip install vllm
 ```
 
-Once we have all of the required packages installed, we can create our FastAPI application. Firstly, we build a small module that will be responsible for handling the GPU attestation  (we use `nano` but you can use your favorite text editor):
+Once we have all of the required packages installed, we can create our FastAPI application. Firstly, we build a small module that will be responsible for handling the GPU attestation  (we use `nano` to create the file but you can use your favorite text editor):
 
 ```bash
 nano gpu_attestation.py
@@ -1053,7 +1062,7 @@ DEK_LEN = 32 # AES-256 key, 32 bytes
 
 def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     """
-    Uses AzureAttestSKR to attest, authorize SKR against AKV, and unwrap the model DEK.
+    Uses AzureAttestSKR to attest, authorize SKR against AKV or managed HSM, and unwrap the model DEK.
     Returns the raw 32-byte DEK.
     """
 
@@ -1079,7 +1088,6 @@ def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     res = subprocess.run(cmd, capture_output=True, check=True)
 
     out = res.stdout.strip()
-    # Either raw 32 bytes or base64 string
     if len(out) == DEK_LEN:
         return bytes(out)
 
