@@ -774,7 +774,7 @@ source ~/.bashrc
 ```
 
 #### 8.4. Create a Python Virtual Environment
-To manage our Python dependencies, we will create a pythonvirtual environment. This will allow us to install the necessary packages without affecting the system-wide Python installation.
+To manage our Python dependencies, we will create a python virtual environment. This will allow us to install the necessary packages without affecting the system-wide Python installation.
 
 ```bash
 cd ~/
