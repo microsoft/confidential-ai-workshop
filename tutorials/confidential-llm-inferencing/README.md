@@ -153,15 +153,7 @@ If you need to upgrade you can run this command (recommended to always use lates
 az upgrade
 ```
 
-#### 1.3 Next Steps Preparation
-
-With the prerequisites established, we're ready to move forward. In the next step, we'll configure Azure Key Vault with secure key release policies specifically tailored for GPU attestation. 
-
-The main differences you'll notice compared to Tutorial 1:
-- SKR policies must account for both CPU and GPU attestation claims
-- VM deployment requires additional GPU-specific parameters
-- The onboarding process includes GPU driver installation and configuration
-- Attestation verification encompasses both hardware components
+With the prerequisites established, we're ready to move forward. In the next step, we'll configure Azure Key Vault with secure key release policies specifically tailored for GPU attestation.
 
 **Checkpoint**: Before proceeding to Step 2, ensure you have:
 - [x] Azure CLI 2.46.0+ installed and configured
@@ -223,6 +215,17 @@ By combining **SKR (CPU/vTPM)** with **local GPU attestation**, keys are release
 
 Similar to the [Confidential ML Training](../confidential-ml-training/README.md) tutorial, we'll create a Azure Key Vault Premium setup.
 
+> [!WARNING]
+> If you are using a new or clean Azure subscription, you might need to register the `Microsoft.KeyVault` resource provider first. If you receive a `MissingSubscriptionRegistration` error, run the following command and wait for it to complete (this can take a few minutes):
+> ```powershell
+> az provider register --namespace Microsoft.KeyVault
+> ```
+> You can check the status with:
+> ```powershell
+> az provider show --namespace Microsoft.KeyVault --query "registrationState"
+> ```
+> Once it shows "Registered", you can proceed to create the Key Vault.
+
 > [!TIP]
 > For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](../../modules/key-management/Managed-HSM.md).
 
@@ -239,18 +242,6 @@ az keyvault create `
 # Verify Key Vault creation and note the URI
 az keyvault show --name $KV_NAME --query "properties.vaultUri" --output tsv
 ```
-
-> [!NOTE]
-> If you are using a new or clean Azure subscription, you might need to register the `Microsoft.KeyVault` resource provider first. If you receive a `MissingSubscriptionRegistration` error, run the following command and wait for it to complete (this can take a few minutes):
-> ```powershell
-> az provider register --namespace Microsoft.KeyVault
-> ```
-> You can check the status with:
-> ```powershell
-> az provider show --namespace Microsoft.KeyVault --query "registrationState"
-> ```
-> Once it shows "Registered", you can proceed to create the Key Vault.
-
 
 
 #### 4.2. Assign Permissions to Key Vault
