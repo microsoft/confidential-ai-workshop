@@ -55,7 +55,15 @@
 
 </details>
 
-## Step-by-Step: Deploying a Confidential VM via Azure CLI
+## Step-by-Step: Deploying a Confidential VM via Azure CLI for Confidential ML Training
+
+In a conventional cloud machine learning workflow, a data scientist typically uploads a dataset to a virtual machine and executes a training script. 
+
+![Standard ML Workflow](../../assets/confidential_ml_training/cassifical_cloud_ml_training.png)
+
+While standard security practices protect this data at-rest (on disk) and in-transit (over the network with TLS), a fundamental security gap remains: data protection in-use. The moment the training script loads the dataset, it resides in the VM's RAM in plaintext, making it theoretically visible to the underlying cloud infrastructure, such as the hypervisor or a privileged administrator. 
+
+This tutorial directly addresses that challenge by demonstrating the confidential computing paradigm. We will build an environment where our sensitive dataset remains encrypted end-to-end, even while in memory, using an Azure Confidential VM.
 
 We will use the Azure CLI to set up our confidential VM environment. This approach makes the tutorial easily reproducible for anyone with an Azure subscription and the appropriate permissions.
 
@@ -566,6 +574,8 @@ For this tutorial, we'll be working with a sample diabetes prediction dataset (s
 
 The beauty of this setup is that we'll implement **end-to-end encryption**: your sensitive data never exists in plain text outside of a Trusted Execution Environment (TEE). This means that even Azure itself cannot peek at your data during processing.
 
+![Confidential Data Encryption for SKR](../../assets/confidential_ml_training/confidential_data_encryption_skr.png)
+
 To make this happen, we'll use a powerful security pattern that separates the key used for the data from the key that protects it. Here's how it works:
 
 First, we'll locally generate a strong symmetric key called a **Data Encryption Key (DEK)**. This is a fast, single-use key whose only job is to encrypt our large CSV file.
@@ -762,7 +772,9 @@ Perfect! You should now have 2 new file, `confidentialData.enc` and `confidentia
 
 Now, let's take a look at the star of our show - the Python script that will run *inside* of the Confidential VM! This script, `train_xgb.py`, is where the magic happens. It's essentially a secure version of our original machine learning workflow, enhanced with confidential computing capabilities.
 
-Here's what this clever script does:
+![Confidential ML Training Workflow](../../assets/confidential_ml_training/confidential_ml_training_skr.png)
+
+Here's what this script does:
 1.  **Authenticates to Azure Key Vault** using the CVM's **Managed Identity** (no passwords or secrets needed!)
 2.  **Unwraps the Symmetric Key**: Reads our encrypted package, sends the "wrapped" symmetric key to Key Vault for attestation, and receives back the decrypted key if everything checks out
 3.  **Processes the data securely**: Decrypts the diabetes dataset in memory and trains an XGBoost model to predict diabetes outcomes
@@ -958,7 +970,7 @@ In order to make the CVM able to decypher the data in its TEE to perform SKR, we
 ```bash
 sudo apt-get update && sudo apt-get install -y \
   build-essential cmake git libssl-dev libcurl4-openssl-dev \
-  libjsoncpp-dev libboost-all-dev nlohmann-json3-dev python3-pip
+  libjsoncpp-dev libboost-all-dev nlohmann-json3-dev
 ```
 
 #### 7.2. Install the Azure Guest Attestation Library
@@ -988,14 +1000,96 @@ cp AzureAttestSKR ~/
 cd ~
 ```
 
+You can verify that the application was built successfully and that your environment is ready to perform SKR by running the following:
+
+```bash
+cd ~/
+source .env
+sudo -E ~/AzureAttestSKR -a $ATTEST_URL -k $KEK_KID -c imds -r
+```
+
+This command should return:
+```output
+The released key is of type RSA. It can be used for wrapKey/unwrapKey operations. 
+```
+
 > [!TIP]
-> By default, the `AzureAttestSKR` will not have any `SKR_TRACE_ON` set, so it will not output any debug information. If you want to enable debug logging, you can set the environment variable `SKR_TRACE_ON=1` to either `1` (minimal logs) or `2` (detailed logs) before running the script.
+> If you don't get the expected output, check the logs for more details.
+> By default, the `AzureAttestSKR` will not have any `SKR_TRACE_ON` set, so it will not output any debug information. Therefore, you can set the environment variable `SKR_TRACE_ON=1` to either `1` (minimal logs) or `2` (detailed logs) before running the script.
 > ```bash
 > export SKR_TRACE_ON=1
+> sudo -E ~/AzureAttestSKR -a $ATTEST_URL -k $KEK_KID -c imds -r
 > ```
-> It is however recommended to not enable this in production environments, as it may expose sensitive information.
+> For a working environment you should obtain this kind of output:
+> ```
+> Tracing is enabled
+> Main started
+> attestation_url: <ATTEST_URL>
+> key_enc_key_url: <KEK_KID>
+> akv_credential_source: 0
+> op: 3
+> Entering Util::ReleaseKey()
+> Entering Util::doSKR()
+> Entering Util::GetMAAToken()
+> Level: Info Tag: AttestatationClientLib ReadAkCertFromTpm:118:Successfully fetched the AK cert from TPM
+> Level: Info Tag: AttestatationClientLib IsAkCertRenewalRequired:57:Number of days left in AK cert expiry - -363
+> Level: Info Tag: AttestatationClientLib ReadAkCertFromTpm:118:Successfully fetched the AK cert from TPM
+> Level: Info Tag: AttestatationClientLib IsAkCertProvisioned:159:Ak Cert issuer name /CN=Global Virtual TPM CA - 03
+> Level: Info Tag: AttestatationClientLib ParseURL:608:Attestation URL info - protocol {https}, domain {sharedeus.eus.attest.azure.net}
+> Level: Info Tag: AttestatationClientLib Attest:113:Attestation URL - <ATTEST_URL>/attest/AzureGuest?api-version=2020-10-01
+> Level: Info Tag: AttestatationClientLib GetOSInfo:622:Retrieving OS Info
+> Level: Info Tag: AttestatationClientLib GetIsolationInfo:692:Retrieving Isolation Info
+> Level: Debug Tag: AttestatationClientLib GetVCekCert:63:VCek cert received from IMDS successfully
+> Level: Info Tag: AttestatationClientLib DecryptMaaToken:391:Successfully Decrypted inner key
+> Level: Info Tag: AttestatationClientLib Attest:178:Successfully attested and decrypted response.
+> Exiting Util::GetMAAToken()
+> MAA Token: eyJ...
+> Entering Util::GetIMDSToken()
+> AKV resource suffix found in KEKUrl
+> IMDS token URL: http://169.254.169.254/metadata/identity/oauth2/token?> api-version=2018-02-01&resource=https://vault.azure.net
+> Response: {"access_token":"eyJ...
+>
+> Access Token: eyJ...
+>
+> Exiting Util::GetIMDSToken()
+> AkvMsiAccessToken: eyJ...
+> Entering Util::GetKeyVaultSKRurl()
+> Request URI: <KEK_KID>/release?api-version=7.3
+>
+> Exiting Util::GetKeyVaultSKRurl()
+> Entering Util::GetKeyVaultResponse()
+> Bearer token: Authorization: Bearer eyJ...
+> SKR response: {"value":"eyJ...
+> Exiting Util::GetKeyVaultResponse()
+> SKR token: eyJ...
+> Entering Util::SplitString()
+> Exiting Util::SplitString()
+> SKR token payload: {"request":{"api-version":"7.3","enc":"CKM_RSA_AES_KEY_WRAP","kid":"<KEK_KID>","nonce":"ADE0101"},"response":{"key":{"key":{"kid":"<KEK_KID>","kty":"RSA","key_ops":["encrypt","decrypt","sign","verify","wrapKey","unwrapKey"],"n":"kqy...
+> SKR key_hsm: eyJ...
+> Encrypted bytes length: 1480
+> Encrypted bytes: fAT...
+> Decrypted Transfer key: HH-6Rd...
+> 
+> Entering decrypt_aes_key_unwrap()
+> Exiting decrypt_aes_key_unwrap()
+> CMK private key has length=1216
+> Decrypted CMK in base64url: MII...
+> Decrypted CMK in hex: 308...
+> Key release completed successfully.
+> The released key is of type RSA. It can be used for wrapKey/unwrapKey operations.
+> ```
+> After troubleshooting, ensure that you set back `SKR_TRACE_ON=""`.
 
-#### 7.5. Install the Python Librairies
+#### 7.5. Create a Python Virtual Environment and Install Dependencies
+To manage our Python dependencies, we will create a python virtual environment. This will allow us to install the necessary packages without affecting the system-wide Python installation.
+
+```bash
+cd ~/
+sudo apt-get update && sudo apt-get install -y python3-venv
+python3 -m venv ccvm-env
+source ccvm-env/bin/activate
+```
+Now, install the required Python packages inside the virtual environment:
 ```bash
 pip3 install pandas scikit-learn xgboost cryptography python-dotenv
 ```
@@ -1004,13 +1098,18 @@ pip3 install pandas scikit-learn xgboost cryptography python-dotenv
 
 Once we our CVM's environment is set up, we can run our ML script. It will securely retrieve the key, decrypt the data in memory, and train the model.
 
+> [!NOTE]
+> Ensure that you have activated your python virtual environment before running the script:
+> ```bash
+> source ~/ccvm-env/bin/activate
+> ```
+
 ```bash
-# Inside the VM's SSH session
 python3 train_xgb.py
 ```
 
 **Expected Output:**
-The script will now run directly, as the libraries are already installed. The output demonstrates the entire confidential workflow: authenticating via managed identity, triggering attestation to unwrap the key, decrypting the data, and finally, evaluating the model.
+The output demonstrates the entire confidential workflow: triggering attestation to unwrap the DEK with by releasing the KEK, decrypting the data, and finally, evaluating the model.
 
 ```
 2025-01-XX XX:XX:XX - INFO - --- Starting Confidential XGBoost Training (In-Memory) ---
@@ -1035,6 +1134,9 @@ weighted avg       0.74      0.72      0.73       154
 ```
 
 **Success!** You have just run a machine learning workload on encrypted data inside a Confidential VM. The data was only ever in plaintext within the hardware-protected memory of the CVM, demonstrating a true end-to-end confidential workflow.
+
+Here is a diagram summarizing the entire process that we built in this tutorial:
+![Confidential ML Training Summary](../../assets/confidential_ml_training/confidential_ml_training_architecture.png)
 
 ### 9. Cleanup
 

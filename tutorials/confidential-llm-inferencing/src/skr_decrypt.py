@@ -11,7 +11,7 @@ DEK_LEN = 32 # AES-256 key, 32 bytes
 
 def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     """
-    Uses AzureAttestSKR to attest, authorize SKR against AKV, and unwrap the model DEK.
+    Uses AzureAttestSKR to attest, authorize SKR against AKV or managed HSM, and unwrap the model DEK.
     Returns the raw 32-byte DEK.
     """
     p = Path(wrapped_key_path)
@@ -32,7 +32,6 @@ def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     res = subprocess.run(cmd, capture_output=True, check=True)
 
     out = res.stdout.strip()
-    # Either raw 32 bytes or base64 string
     if len(out) == DEK_LEN:
         return bytes(out)
 
