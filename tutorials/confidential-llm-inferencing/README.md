@@ -16,6 +16,18 @@ Organizations can use powerful AI models on confidential data (like analyzing me
 In essence, Confidential GPUs enable "Confidential AI" – AI that's privacy-preserving and secure end-to-end. Many of the reasons to use confidential computing in the first place apply strongly here.
 
 ## Scenario & Key Concepts
+To understand the benefits of Confidential AI, let's first look at a standard architecture for GPU-powered LLM inference, as illustrated in the figure below.
+
+![Standard LLM Inference Architecture](../../assets/confidential_llm_inferencing/classical_llm_inferencing_architecture.png)
+
+In this classical model, we rely on operational trust. The cloud provider has access to the host machine, and an administrator with sufficient privileges could potentially inspect the VM's memory. This exposes two key assets:
+
+ - The AI Model: The model's weights are loaded in plaintext into the GPU's memory (vRAM) and the system's memory (RAM). This makes the valuable IP of the model vulnerable to theft or inspection.
+
+ - User Data: The user's prompts and the model's responses are processed in plaintext by the inference server. This data is also exposed in memory during use.
+
+While TLS protects data in-transit, it offers no protection for data in-use. The goal of our confidential architecture is to close this gap.
+
 We'll outline a scenario where we deploy a language model inference service on a confidential GPU VM. In this scenario, we will consider a model that has been fully trained and instructed to be used as a chat bot such as [Phi-4-mini-reasoning]([https://github](https://github.com/marketplace/models/azureml/Phi-4-mini-reasoning)) (we suppose that this model is proprietary and the user queries might contain private data). We want to ensure:
 1. The model weights are not exposed to Azure or any outside party.
 2. The user's prompts and the model's responses are not visible to anyone except the user (and the TEE doing the processing).
@@ -141,15 +153,7 @@ If you need to upgrade you can run this command (recommended to always use lates
 az upgrade
 ```
 
-#### 1.3 Next Steps Preparation
-
-With the prerequisites established, we're ready to move forward. In the next step, we'll configure Azure Key Vault with secure key release policies specifically tailored for GPU attestation. 
-
-The main differences you'll notice compared to Tutorial 1:
-- SKR policies must account for both CPU and GPU attestation claims
-- VM deployment requires additional GPU-specific parameters
-- The onboarding process includes GPU driver installation and configuration
-- Attestation verification encompasses both hardware components
+With the prerequisites established, we're ready to move forward. In the next step, we'll configure Azure Key Vault with secure key release policies specifically tailored for GPU attestation.
 
 **Checkpoint**: Before proceeding to Step 2, ensure you have:
 - [x] Azure CLI 2.46.0+ installed and configured
@@ -202,7 +206,7 @@ Concretely:
 * **In-guest GPU attestation** then confirms the **NVIDIA H100** is in the expected confidential mode with approved firmware before the app uses the released key or loads model weights.
 
 > [!NOTE]
-> For GPU verification we use the *Local GPU Verifier* from the [Azure/az-cgpu-onboarding](https://github.com/Azure/az-cgpu-onboarding) repo (we will cover that in step [8.4. Verify GPU Attestation](https://github.com/microsoft/confidential-ai-workshop/blob/initial-tutorials/tutorials/confidential-llm-inferencing/README.md#84-verify-gpu-attestation) of this tutorial). You will be able to run it at startup and any time later to (re)check the GPU state.
+> For GPU verification we use the *Local GPU Verifier* from the [Azure/az-cgpu-onboarding](https://github.com/Azure/az-cgpu-onboarding) repo (we will cover that in step [8.5. Verify GPU Attestation](#85-verify-gpu-attestation) of this tutorial). You will be able to run it at startup and any time later to (re)check the GPU state.
 
 By combining **SKR (CPU/vTPM)** with **local GPU attestation**, keys are released only to a compliant CVM *and* are usable only when the GPU is also in a verified confidential state—exactly what we need for confidential AI workloads.
 
@@ -210,6 +214,17 @@ By combining **SKR (CPU/vTPM)** with **local GPU attestation**, keys are release
 #### 4.1 Create the Key Vault
 
 Similar to the [Confidential ML Training](../confidential-ml-training/README.md) tutorial, we'll create a Azure Key Vault Premium setup.
+
+> [!WARNING]
+> If you are using a new or clean Azure subscription, you might need to register the `Microsoft.KeyVault` resource provider first. If you receive a `MissingSubscriptionRegistration` error, run the following command and wait for it to complete (this can take a few minutes):
+> ```powershell
+> az provider register --namespace Microsoft.KeyVault
+> ```
+> You can check the status with:
+> ```powershell
+> az provider show --namespace Microsoft.KeyVault --query "registrationState"
+> ```
+> Once it shows "Registered", you can proceed to create the Key Vault.
 
 > [!TIP]
 > For storing and managing cryptographic keys in production, **Azure Managed HSM** is the recommended best practice. It offers a fully managed, highly available, single-tenant, standards-compliant HSM service. However, compared to Premium SKU of Azure Key Vault, it comes at a higher cost. If you are interested in using Managed HSM, please refer to the module [Secure Key Release set-up with Managed HSM](../../modules/key-management/Managed-HSM.md).
@@ -227,18 +242,6 @@ az keyvault create `
 # Verify Key Vault creation and note the URI
 az keyvault show --name $KV_NAME --query "properties.vaultUri" --output tsv
 ```
-
-> [!NOTE]
-> If you are using a new or clean Azure subscription, you might need to register the `Microsoft.KeyVault` resource provider first. If you receive a `MissingSubscriptionRegistration` error, run the following command and wait for it to complete (this can take a few minutes):
-> ```powershell
-> az provider register --namespace Microsoft.KeyVault
-> ```
-> You can check the status with:
-> ```powershell
-> az provider show --namespace Microsoft.KeyVault --query "registrationState"
-> ```
-> Once it shows "Registered", you can proceed to create the Key Vault.
-
 
 
 #### 4.2. Assign Permissions to Key Vault
@@ -425,7 +428,12 @@ $VM_PUBLIC_IP = $(az vm show -d --resource-group $RESOURCE_GROUP --name $VM_NAME
 ```
 
 ### 6. Model Preparation
-Now that we have our key vault and wrapping key set up, we can prepare our proprietary model for deployment. In this tutorial, we will use the [Phi-4-mini-reasoning](https://huggingface.co/microsoft/Phi-4-mini-reasoning) model as an example. This model is a smaller version of the Phi-4 series and is suitable for demonstration purposes.
+Now that we have our key vault and wrapping key set up, we can prepare our proprietary model for deployment. To protect it, we can't simply upload it to the VM. We must first encrypt it locally to ensure that the model is never exposed in plaintext outside of a trusted execution environment. The following diagram illustrates this crucial preparation step:
+
+![Model Preparation Workflow](../../assets/confidential_llm_inferencing/confidential_model_encrypt.png)
+
+
+In this tutorial, we will use the [Phi-4-mini-reasoning](https://huggingface.co/microsoft/Phi-4-mini-reasoning) model as an example. This model is a smaller version of the Phi-4 series and is suitable for demonstration purposes.
 
 To securely store the model, we will first need to have the model files locally, then generate a key to encrypt it and then use our Key Encryption Key (KEK) to "wrap" our local key. This will ensure that the model is securely stored and can only be accessed by our confidential GPU VM.
 
@@ -449,7 +457,7 @@ To make all of this process, we will create a python script that will handle the
 
 
 #### 6.1. Install Local Python Dependencies
-Install the necessary Python packages for encryption and Azure Key Vault interaction:
+First ensure that you have a working Python environment (you can check this by running `python --version` in your terminal). Then install the necessary Python packages for encryption and Azure Key Vault interaction:
 
 ```powershell
 pip install azure-identity==1.23.1 azure-keyvault-keys==4.11.0 pycryptodome==3.23.0
@@ -756,7 +764,31 @@ echo 'export PATH=/usr/local/cuda-12.5/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### 8.4. Verify GPU Attestation
+#### 8.4. Create a Python Virtual Environment
+To manage our Python dependencies, we will create a python virtual environment. This will allow us to install the necessary packages without affecting the system-wide Python installation.
+
+```bash
+cd ~/
+sudo apt-get update && sudo apt-get install -y python3-venv
+python3 -m venv ccvm-env
+source ccvm-env/bin/activate
+```
+
+You should see the prompt change to indicate that you are now working within the `ccvm-env` virtual environment.
+
+> [!NOTE]
+> Every time you log in to the VM, you will need to activate the virtual environment by running the command:
+> ```bash
+> cd ~/
+> source ccvm-env/bin/activate
+> ```
+> You can deactivate the virtual environment at any time by running the command:
+> ```bash
+> deactivate
+> ```
+> This will return you to the system-wide Python environment.
+
+#### 8.5. Verify GPU Attestation
 To verify that the CGPU is running in the intended state, you can use the tool [local_gpu_verifier](https://github.com/Azure/az-cgpu-onboarding/tree/283feee4d9135767e96e08126c306769d6591334/src/local_gpu_verifier) provided in the onboarding package. This tool checks the GPU's attestation status and ensures that it is operating in a secure and compliant manner.
 
 > [!NOTE]
@@ -766,18 +798,17 @@ To verify that the CGPU is running in the intended state, you can use the tool [
 > ```
 > Otherwise, you can proceed with the next steps without requiring sudo privileges.
 
-Navigate to the `local_gpu_verifier` directory and build the tool:
+Ensure that you have activated the `ccvm-env` virtual environment, then navigate to the `local_gpu_verifier` directory and build the tool:
 ```bash
+cd ~/
+source ccvm-env/bin/activate
 cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-python3 -m venv ./gpuattestation-env
-source ./gpuattestation-env/bin/activate
 pip install .
 ```
 
 Then to run the verifier you can execute the following commands:
 ```bash
-cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-source ./gpuattestation-env/bin/activate
+cd ~/
 python3 -m verifier.cc_admin
 ```
 
@@ -826,18 +857,19 @@ GPU Attestation is Successful.
 
 Here we can see that the GPU attestation is successful and that the GPU is in the expected state.
 
-#### 8.5. Install the Secure Key Release Azure application
-To get an asymetric encryption key stored in Azure Keyvault or managed HSM released to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
+#### 8.6. Install the Secure Key Release Azure application
+To be able to release the asymetric key encryption key stored in our Azure Keyvault or managed HSM to our VM, we will use the sample secure key release application from the [confidential-computing-cvm-guest-attestation](https://github.com/Azure/confidential-computing-cvm-guest-attestation) repository.
 
-##### 8.5.1. Update and Install build tools and librairies
+##### 8.6.1. Update and Install build tools and librairies
 
 ```bash
+cd ~/
 sudo apt-get install -y \
   build-essential cmake git libssl-dev libcurl4-openssl-dev \
   libjsoncpp-dev libboost-all-dev nlohmann-json3-dev
 ```
 
-##### 8.5.2. Install the Azure Guest Attestation Library
+##### 8.6.2. Install the Azure Guest Attestation Library
 The latest attestation package can be found here [https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/](https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/)
 ```bash
 wget https://packages.microsoft.com/repos/azurecore/pool/main/a/azguestattestation1/azguestattestation1_1.1.2_amd64.deb
@@ -845,7 +877,7 @@ sudo dpkg -i azguestattestation1_1.1.2_amd64.deb
 rm azguestattestation1_1.1.2_amd64.deb
 ```
 
-##### 8.5.3. Build the Secure Key Release Application
+##### 8.6.3. Build the Secure Key Release Application
 Clone the repository:
 ```bash
 git clone https://github.com/Azure/confidential-computing-cvm-guest-attestation.git
@@ -857,7 +889,7 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j"$(nproc)"
 cp AzureAttestSKR ~/
-cd ~
+cd ~/
 ```
 
 You can verify that the application was built successfully and that your environment is ready to perform SKR by running the following:
@@ -941,39 +973,26 @@ The released key is of type RSA. It can be used for wrapKey/unwrapKey operations
 > After troubleshooting, ensure that you set back `SKR_TRACE_ON=""`.
 
 ### 9. The Confidential LLM Inference Application
-On the VM, we will now set up the Python environment and the server application. The server's only job is to perform the secure key release, decrypt the model archive on its disk, extract it into protected memory, load the model, and serve inference requests.
+On the VM, we will now set up the Python environment and the server application. The server's only job is to perform the secure key release, decrypt the model archive, extract it into protected memory, load the model, and serve inference requests. At this stage, we will have everything we need to run our confidential LLM inference server on localhost.
+
+![Confidential SKR and Inference Workflow](../../assets/confidential_llm_inferencing/confidential_skr.png)
 
 #### 9.1. Install Python and Required Packages
 
-First, we need to set up a Python virtual environment:
-```bash
-cd ~/
-sudo apt-get update && sudo apt-get install -y python3-venv
-python3 -m venv ccvm-env
-source ccvm-env/bin/activate
-```
-
-Then, we install Python and the required packages for our FastAPI application and for running our vLLM (in our case `Phi-4-mini-reasoning`). We will use `pip` to install the necessary libraries.
+For our entire application, we will use the python environment that we built earlier in the step [8.4. Create a Python Virtual Environment](#84-create-a-python-virtual-environment). We install the required packages for our vLLM server (`Phi-4-mini-reasoning` in the case of this tutorial). We will use `pip` to install the necessary libraries.
 
 ```bash
 pip install torch mamba-ssm causal-conv1d transformers accelerate "uvicorn[standard]" fastapi "pydantic" cryptography python-dotenv
 pip install flash-attn --no-build-isolation
 ```
 
-In order to be able to attest the GPU as part of the secure key release process of our vllm inference application, we also need to install the gpu_attestation package inside of our virtual environment:
-
-```bash
-cd ~/az-cgpu-onboarding/src/local_gpu_verifier
-pip install .
-cd ~/
-```
-Finally, we install `vLLM` which is the library that will allow us to run our LLM inference server:
+Then, we install `vllm` which is the library that will allow us to run our LLM inference server:
 
 ```bash
 pip install vllm
 ```
 
-Once we have all of the required packages installed, we can create our FastAPI application. Firstly, we build a small module that will be responsible for handling the GPU attestation  (we use `nano` but you can use your favorite text editor):
+Once we have all of the required packages installed, we can create our FastAPI application. Firstly, we build a small module that will be responsible for handling the GPU attestation  (we use `nano` to create the file but you can use your favorite text editor):
 
 ```bash
 nano gpu_attestation.py
@@ -1034,7 +1053,7 @@ DEK_LEN = 32 # AES-256 key, 32 bytes
 
 def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     """
-    Uses AzureAttestSKR to attest, authorize SKR against AKV, and unwrap the model DEK.
+    Uses AzureAttestSKR to attest, authorize SKR against AKV or managed HSM, and unwrap the model DEK.
     Returns the raw 32-byte DEK.
     """
 
@@ -1060,7 +1079,6 @@ def unwrap_dek(wrapped_key_path: str, attest_url: str, kek_kid: str) -> bytes:
     res = subprocess.run(cmd, capture_output=True, check=True)
 
     out = res.stdout.strip()
-    # Either raw 32 bytes or base64 string
     if len(out) == DEK_LEN:
         return bytes(out)
 
@@ -1325,6 +1343,8 @@ Before diving into implementation, let's understand what we're building and why 
 ```
 Internet → Azure NSG (80/443 only) → Caddy (TLS termination) → vLLM (127.0.0.1:8000)
 ```
+
+![Secure Architecture Diagram](../../assets/confidential_llm_inferencing/confidential_llm_inference_architecture.png)
 
 This architecture ensures that even if an attacker compromises the network layer, they cannot directly access the model service. All external traffic must pass through our security layers.
 
@@ -1644,6 +1664,9 @@ The client will open in your browser at `http://localhost:8501`. Enter:
 - **API Key**: The key generated in [Step 11](#11-exposing-the-confidential-llm-service-with-tls)
 - **Model**: `/dev/shm/decrypted_model/Phi-4-mini-reasoning`
 
+With all of these steps completed, you should now have a fully functional confidential AI inference service with a secure client application! Here is the full architecture we have built:
+
+![Confidential AI Inference Architecture](../../assets/confidential_llm_inferencing/confidential_llm_encrypt_and_inference_architecture.png)
 
 ### 13. Cleanup
 To avoid incurring further costs for these powerful resources, you should delete the entire resource group when you are finished. This will permanently delete the VM, Key Vault, and all other associated resources.
