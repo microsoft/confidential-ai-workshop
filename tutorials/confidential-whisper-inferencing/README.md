@@ -358,34 +358,13 @@ pip install \
     aiofiles==24.1.0
 ```
 
-### Creating Configuration File
+### Starting the Streamlit Client
 
-First, let's set up our configuration with proper secret management:
+Now, we can run a Streamlit application (a sample one is provided to you in [streamlit_client.py](./src/streamlit_client_confidential_whisper.py)) to securely interact with both the Confidential Whisper and LLM services. The streamlit application will be an enhanced version of the one described in the previous tutorial that adds this whisper part.
 
+You can run it with
 ```bash
-# Create a .env file for configuration
-nano ~/whisper_client.env
-```
-
-Then add the following content:
-```bash
-# === Confidential Whisper Configuration ===
-KMS_URL=https://accconfinferenceproduction.confidential-ledger.azure.com
-WHISPER_ENDPOINT=<your-whisper-endpoint-url>
-WHISPER_API_KEY=<your-whisper-api-key>
-
-# === Your Confidential LLM Configuration ===
-LLM_ENDPOINT=https://<your-llm-fqdn>/v1/chat/completions
-LLM_API_KEY=<your-llm-api-key>
-LLM_MODEL=/dev/shm/decrypted_model
-```
-
-Now, we can use this configuration in a Streamlit application (a sample one is provided to you in [streamlit_client.py](./src/streamlit_client.py)) to securely interact with both the Confidential Whisper and LLM services. The streamlit application will be an enhanced version of the one described in the previous tutorial that adds this whisper part.
-
-You can now run it with
-```bash
-source .venv/bin/activate
 streamlit run streamlit_client.py --server.port 8501 --server.address 0.0.0.0
 ```
-You can access to your Streamlit app at `http://<your-vm-ip>:8501`.
+You can access to your Streamlit app via the port `8501` on your browser.
 This application allows you to upload an audio file, which is securely transcribed using Confidential Whisper via OHTTP. The resulting transcript is displayed and can be automatically sent to your Confidential LLM for further analysis or response generation.
